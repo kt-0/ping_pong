@@ -7,11 +7,14 @@ import datetime, math, random
 
 def main():
 
-	#df1 = pd.read_excel("assets/excel/ping_pong_scoresheet.xlsx", "Sheet1")
-	df1 = pd.read_excel('assets/excel/ping_pong_scoresheet_v2.xlsx', header=0, skipfooter=14)
-	date = pd.DatetimeIndex(df.index, name='Date')
-	df1.index = date
-	print(df1)
+	df1 = pd.read_excel('assets/excel/ping_pong_scoresheet_v2.xlsx', header=0, skipfooter=13).reset_index(drop=True)
+	dates = pd.DatetimeIndex(df1.Date.dt.date, name='Date')
+	start_games = df1.shape[0]
+	df1.index = dates
+
+	df1.drop(columns='Date',inplace=True)
+	#print(df1.head())
+
 	f_score = get_score('Fritz')
 	k_score = get_score('Ken')
 	side = input('Winner side? H/A').upper()
@@ -23,9 +26,9 @@ def main():
 	while ((side != 'A') and (side != 'H')):
 		side = input('Winner side? H/A').upper()
 
-	today = pd.DatetimeIndex([pd.datetime.today().date()], name='Date')
+	now = pd.DatetimeIndex([pd.datetime.today().date()], name='Date')
 
-	dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score]}, index=today)
+	dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=now)
 	df1 = df1.append(dfnew, sort=False)
 	#df1.loc[pd.datetime.today().date()] = [f_score, k_score, side]
 
@@ -35,8 +38,9 @@ def main():
 		f_score = get_score('Fritz')
 		k_score = get_score('Ken')
 		side = input('Winner side? H/A').upper()
-		dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Date':pd.datetime.date.today().date()} index='Date')
-		df1 = df1.append(dfnew)
+		now = pd.DatetimeIndex([pd.datetime.today().date()], name='Date')
+		dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=now)
+		df1 = df1.append(dfnew, sort=False)
 		more = input('More scores to enter? (Y/N)').lower()
 
 	f_scores = df1['Fritz'].tolist()
@@ -45,6 +49,7 @@ def main():
 
 	total_games = df1.shape[0]
 
+	#print(df1)
 	stats = {
 		'f': {
 			'A': {'wins':0,'win_perc':0,'ppg':0},
@@ -66,6 +71,7 @@ def main():
 		}
 			}
 
+	#print(sides)
 	opposite = str.maketrans("fkAH", "kfHA")
 
 	for i,x in enumerate(zip(f_scores,k_scores,sides)):
@@ -73,6 +79,7 @@ def main():
 			k = x[1]
 			side = x[2]
 			opp = side.translate(opposite)
+			#print(opp)
 			if f>k:
 				stats['f'][side]['wins'] = stats['f'][side]['wins']+1
 				stats['f'][side]['ppg'] = (stats['f'][side]['ppg']+f)
@@ -103,18 +110,29 @@ def main():
 		{
 		'F':[
 			stats['f']['H']['wins'], stats['f']['A']['wins'], stats['f']['overall']['wins'],
-			stats['f']['H']['win_perc'], stats['f']['A']['win_perc'], stats['f']['overall']['win_perc'],
-			stats['f']['H']['ppg'], stats['f']['A']['ppg'], stats['f']['overall']['ppg'], 0, 0],
+			nr(stats['f']['H']['win_perc']), nr(stats['f']['A']['win_perc']), nr(stats['f']['overall']['win_perc']),
+			nr(stats['f']['H']['ppg']), nr(stats['f']['A']['ppg']), nr(stats['f']['overall']['ppg']), 0, 0],
 		'K':[
 			stats['k']['H']['wins'], stats['k']['A']['wins'], stats['k']['overall']['wins'],
-			stats['k']['H']['win_perc'], stats['k']['A']['win_perc'], stats['k']['overall']['win_perc'],
-			stats['k']['H']['ppg'], stats['k']['A']['ppg'], stats['k']['overall']['ppg'], 0, 0]
+			nr(stats['k']['H']['win_perc']), nr(stats['k']['A']['win_perc']), nr(stats['k']['overall']['win_perc']),
+			nr(stats['k']['H']['ppg']), nr(stats['k']['A']['ppg']), nr(stats['k']['overall']['ppg']), 0, 0]
 		}, index=multi_ind)
 
 
+	curr_games = df1.shape[0]
+
+	print("\n====== Games Entered ======\n")
+	print(df1.tail(n=curr_games-start_games))
+	print("\n======== Stats ========\n")
+	print(dfstats.head(n=12))
+	print("\nGames played: ", df1.shape[0])
+
 	write_xlsx(df1, dfstats)
 
-# rounding function (Normal Round)
+############
+# modular functions
+############
+## rounding function (nr = Normal Round)
 def nr(n, decimals=2):
 	expoN = n * 10 ** decimals
 	if abs(expoN) - abs(math.floor(expoN)) < 0.5:
@@ -134,44 +152,60 @@ def percentify(x):
 	x = nr(x)
 	return("{:.2%}".format(x))
 
+############
+# Function for writing/saving the dataframes to excel
+############
 def write_xlsx(df, dfstats):
-	# Create a Pandas Excel writer using XlsxWriter as the engine.
-	writer = pd.ExcelWriter("assets/excel/ping_pong_scoresheet_v2.xlsx", engine="xlsxwriter")
+	writer = pd.ExcelWriter("assets/excel/ping_pong_scoresheet_v2.xlsx", engine="xlsxwriter", date_format='mm/dd/yy', datetime_format='mm/dd/yy')
 	df.to_excel(writer, sheet_name="Sheet1", startrow=0, startcol=0)
 	dfstats.to_excel(writer, sheet_name="Sheet1", startrow=(df.shape[0]+2), startcol=0)
 	workbook = writer.book
 	worksheet = writer.sheets["Sheet1"]
 
+	stats_head_row = df.shape[0]+2
+
 	game_rows = df.shape[0]
+	win_index,winper_index,ppg_index = game_rows+3,game_rows+6,game_rows+9
+
 	# tot_wins_row = (df.shape[0] - 4)
 	# ppg_row = (df.shape[0] - 3)
 	#tot_games_row = (df.shape[0] - 1)
 	#h_vs_a_row = df.shape[0]
 
-	light_blue = '#e8f4ff'
-	grey = '#a7a9aa'
+	light_blue = '#D9E1F1'
+	grey = '#C9C9C9'
 	greyish_blue = '#b6d2ed'
-	dark_blue = '#1b4ea0'
+	dark_blue = '#4674C1'
+	mid_blue = '#8FAAD9'
 
 	odd_row_format = workbook.add_format({
 		'bg_color': light_blue,
-		'border_color': grey,
 		'border':1,
+		'top_color': mid_blue,
+		'bottom_color': mid_blue,
+		'left_color': grey,
+		'right_color': grey,
 		'font_name': 'Helvetica Neue',
 		'font_size':12 })
 
 	odd_side_format = workbook.add_format({
 		'bg_color': light_blue,
-		'border_color': grey,
 		'border':1,
+		'top_color': mid_blue,
+		'bottom_color': mid_blue,
+		'left_color': grey,
+		'right_color': grey,
 		'font_name': 'Helvetica Neue',
 		'font_size':10,
 		'italic':True })
 
 	odd_date_format = workbook.add_format({
 		'bg_color': light_blue,
-		'border_color': grey,
 		'border':1,
+		'top_color': mid_blue,
+		'bottom_color': mid_blue,
+		'left_color': grey,
+		'right_color': grey,
 		'font_name': 'Helvetica Neue',
 		'font_size':10,
 		'italic':True,
@@ -183,11 +217,12 @@ def write_xlsx(df, dfstats):
 
 	head_format = workbook.add_format({
 		'font_size': 14,
+		'font_name': 'AppleGothic',
 		'font_color': 'white',
 		'bg_color': dark_blue,
 		'bold': True,
 		'bottom': 1,
-		'center_across': True})
+		'center_across': True })
 
 	date_format = workbook.add_format({
 		'border_color': grey,
@@ -206,13 +241,39 @@ def write_xlsx(df, dfstats):
 		'font_name':'Helvetica Neue',
 		'bg_color':'#f2db87',
 		'num_format': '#,##0'})
+	stat_head_format = workbook.add_format({
+		'valign': 'vcenter',
+
+	})
+
+	side_format = workbook.add_format({
+		'border_color': grey,
+		'border':1,
+		'font_name': 'Helvetica Neue',
+		'font_size':10,
+		'italic':True })
+
+	win_head_format = workbook.add_format({
+		'font_size': 14,
+		'font_name': 'AppleGothic',
+		'font_color': 'white',
+		'bg_color': dark_blue,
+		'bold': True,
+		'valign': 'center'
+	})
 
 	worksheet.set_column("A:E", cell_format=main_format)
+
+	#TODO: implement this TODO TODO
+	# worksheet.set_column("A1:A{}".format(game_rows), cell_format=date_format)
+	# TODO TODO ^^^^^^^
+
 	#worksheet.set_column("$B$1:$B$1", None, cell_format=head_format)
 
 	# format the head
 	for col_num, value in enumerate(df.columns.values):
 		# worksheet.write(row, col, value, format)
+		#print("col_num: ", col_num, " value: ", value)
 		worksheet.write(0, col_num + 1, value, head_format)
 
 	# light blue fill on every other row
@@ -230,6 +291,10 @@ def write_xlsx(df, dfstats):
 		#worksheet.write_datetime(i, 3, d, odd_date_format)
 		worksheet.write(i, 3, s, odd_side_format)
 
+	for i in range(2, game_rows, 2):
+		x = i-1
+		s = df.iloc[x, 2]
+		worksheet.write(i, 3, s, side_format)
 	# for i in range(2, game_rows+1, 2):
 	# 	x = i-1
 	# 	worksheet.write_datetime(i, 3, df.iloc[x, 2], date_format)
@@ -250,6 +315,15 @@ def write_xlsx(df, dfstats):
 
 	#worksheet.set_column('A:A{}'.format(game_rows), None, None, {'hidden': True})
 
+	#worksheet.write(win_index, 0, )
+	#worksheet.merge_range('B4:D4', 'Merged Range', merge_format)
+
+
+	# print("index[0]: ", dfstats.index[0])
+	# print("index[1]: ", dfstats.index[1])
+	# print("index[0][0]: ",dfstats.index[0][0])
+	# print("index[0][1]: ",dfstats.index[0][1])
+	# print("index[1][1]: ",dfstats.index[1][1])
 	writer.save()
 
 
