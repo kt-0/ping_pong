@@ -5,6 +5,12 @@ import datetime, math, random
 
 # TODO: add timestamps, then use them for multi index, then put the timestamps in a hidden column
 
+class Stats:
+
+	class H:
+
+	H = H()
+
 def main():
 
 	df1 = pd.read_excel('assets/excel/ping_pong_scoresheet_v2.xlsx', header=0, skipfooter=13).reset_index(drop=True)
@@ -49,7 +55,6 @@ def main():
 
 	total_games = df1.shape[0]
 
-	#print(df1)
 	stats = {
 		'f': {
 			'A': {'wins':0,'win_perc':0,'ppg':0},
@@ -58,8 +63,12 @@ def main():
 				'wins':0,
 				'win_perc':0,
 				'ppg': nr(sum(f_scores)/total_games)
+				},
+			'streak': {
+				'current':0,
+				'best': 0
 				}
-		},
+			},
 		'k':{
 			'A': {'wins':0,'win_perc':0,'ppg':0},
 			'H': {'wins':0,'win_perc':0,'ppg':0},
@@ -67,9 +76,13 @@ def main():
 				'wins':0,
 				'win_perc':0,
 				'ppg':nr(sum(k_scores)/total_games)
+				},
+			'streak': {
+				'current':0,
+				'best': 0
 				}
-		}
 			}
+		}
 
 	#print(sides)
 	opposite = str.maketrans("fkAH", "kfHA")
@@ -84,11 +97,19 @@ def main():
 				stats['f'][side]['wins'] = stats['f'][side]['wins']+1
 				stats['f'][side]['ppg'] = (stats['f'][side]['ppg']+f)
 				stats['k'][opp]['ppg'] = (stats['k'][opp]['ppg']+k)
+				stats['f']['streak']['current'] = stats['f']['streak']['current']+1
+				stats['k']['streak']['current'] = 0
+				if (stats['f']['streak']['current'] > stats['f']['streak']['best']):
+					stats['f']['streak']['best'] = stats['f']['streak']['current']
 
 			else:
 				stats['k'][side]['wins'] = stats['k'][side]['wins']+1
 				stats['k'][side]['ppg'] = (stats['k'][side]['ppg']+k)
 				stats['f'][opp]['ppg'] = (stats['f'][opp]['ppg']+f)
+				stats['k']['streak']['current'] = stats['k']['streak']['current']+1
+				stats['f']['streak']['current'] = 0
+				if (stats['k']['streak']['current'] > stats['k']['streak']['best']):
+					stats['k']['streak']['best'] = stats['k']['streak']['current']
 
 
 	for x in stats:
@@ -110,12 +131,16 @@ def main():
 		{
 		'F':[
 			stats['f']['H']['wins'], stats['f']['A']['wins'], stats['f']['overall']['wins'],
-			nr(stats['f']['H']['win_perc']), nr(stats['f']['A']['win_perc']), nr(stats['f']['overall']['win_perc']),
-			nr(stats['f']['H']['ppg']), nr(stats['f']['A']['ppg']), nr(stats['f']['overall']['ppg']), 0, 0],
+			nr(stats['f']['H']['win_perc']), nr(stats['f']['A']['win_perc']),
+			nr(stats['f']['overall']['win_perc']), nr(stats['f']['H']['ppg']),
+			nr(stats['f']['A']['ppg']), nr(stats['f']['overall']['ppg']),
+			nr(stats['f']['streak']['current'],0), nr(stats['f']['streak']['best'],0)],
 		'K':[
 			stats['k']['H']['wins'], stats['k']['A']['wins'], stats['k']['overall']['wins'],
-			nr(stats['k']['H']['win_perc']), nr(stats['k']['A']['win_perc']), nr(stats['k']['overall']['win_perc']),
-			nr(stats['k']['H']['ppg']), nr(stats['k']['A']['ppg']), nr(stats['k']['overall']['ppg']), 0, 0]
+			nr(stats['k']['H']['win_perc']), nr(stats['k']['A']['win_perc']),
+			nr(stats['k']['overall']['win_perc']), nr(stats['k']['H']['ppg']),
+			nr(stats['k']['A']['ppg']), nr(stats['k']['overall']['ppg']),
+			nr(stats['k']['streak']['current'],0), nr(stats['k']['streak']['best'],0)]
 		}, index=multi_ind)
 
 
@@ -172,12 +197,10 @@ def write_xlsx(df, dfstats):
 	#tot_games_row = (df.shape[0] - 1)
 	#h_vs_a_row = df.shape[0]
 
-	light_blue = '#D9E1F1'
-	grey = '#C9C9C9'
-	greyish_blue = '#b6d2ed'
-	dark_blue = '#4674C1'
-	mid_blue = '#8FAAD9'
-
+	light_blue, dark_blue, mid_blue = '#D9E1F1', '#4674C1', '#8FAAD9'
+	grey, greyish_blue = '#C9C9C9', '#b6d2ed'
+	yellow = '#FED330'
+	maroon = '#A9180F'
 	odd_row_format = workbook.add_format({
 		'bg_color': light_blue,
 		'border':1,
@@ -241,10 +264,6 @@ def write_xlsx(df, dfstats):
 		'font_name':'Helvetica Neue',
 		'bg_color':'#f2db87',
 		'num_format': '#,##0'})
-	stat_head_format = workbook.add_format({
-		'valign': 'vcenter',
-
-	})
 
 	side_format = workbook.add_format({
 		'border_color': grey,
@@ -253,13 +272,14 @@ def write_xlsx(df, dfstats):
 		'font_size':10,
 		'italic':True })
 
-	win_head_format = workbook.add_format({
+	stat_head_format = workbook.add_format({
 		'font_size': 14,
 		'font_name': 'AppleGothic',
 		'font_color': 'white',
 		'bg_color': dark_blue,
 		'bold': True,
-		'valign': 'center'
+		'align': 'center',
+		'valign': 'vcenter'
 	})
 
 	worksheet.set_column("A:E", cell_format=main_format)
@@ -315,7 +335,7 @@ def write_xlsx(df, dfstats):
 
 	#worksheet.set_column('A:A{}'.format(game_rows), None, None, {'hidden': True})
 
-	#worksheet.write(win_index, 0, )
+	worksheet.write(win_index, 0, dfstats.index[0][0], win_head_format)
 	#worksheet.merge_range('B4:D4', 'Merged Range', merge_format)
 
 
@@ -329,42 +349,54 @@ def write_xlsx(df, dfstats):
 
 main()
 
+class Playerstats:
+	def __init__(self, home=Side(), away=Side()):
 
-# old stuff
+		self.a = away
+		self.h = home
+		self._wins = self.a.wins + self.h.wins
+		self._win_perc = (self.a.wins+self.h.wins)/(self.a.games+self.h.games)
 
-# stats['k']['H']['win_perc'] = "{:.2%}".format(stats['k']['H']['wins']/(stats['k']['H']['wins']+stats['f']['A']['wins']))
-# stats['f']['H']['win_perc'] = "{:.2%}".format(stats['f']['H']['wins']/(stats['f']['H']['wins']+stats['k']['A']['wins']))
-# stats['k']['A']['win_perc'] = "{:.2%}".format(stats['k']['A']['wins']/(stats['k']['A']['wins']+stats['f']['H']['wins']))
-# stats['f']['A']['win_perc'] = "{:.2%}".format(stats['f']['A']['wins']/(stats['f']['A']['wins']+stats['k']['H']['wins']))
+	@property
+	def wins(self):
+		self._wins = self.a.wins + self.h.wins
+		return(self._wins)
 
-# wins = {'f':{'A':0,'H':0}, 'k':{'A':0,'H':0}}
-# win_perc = {'f':{'A':0,'H':0}, 'k':{'A':0,'H':0}}
-# ppg = {'f':{'A':0,'H':0}, 'k':{'A':0,'H':0}}
+	@property
+	def ppg(self):
+		self._ppg = self.points/(self.wins+self.losses)
+		return(self._ppg)
 
-# for i,x in enumerate(zip(f_scores,k_scores)):
-# 	if x[0]>x[1]:
-# 		wins['f'][sides[i]] = wins['f'][sides[i]]+1
-# 	else:
-# 		wins['k'][sides[i]] = wins['k'][sides[i]]+1
-
-
-# ppg['f'] = sum(f_scores)/len(f_scores)
-# ppg['k'] = sum(k_scores)/len(k_scores)
-
-# total_games = wins['k'] + wins['f']
+	@property
+	def win_perc(self):
+		self._win_perc = (self.a.wins+self.h.wins)/(self.a.games+self.h.games)
+		return(self._win_perc)
 
 
-# advantage = {'H':((df1['Side'].tolist()).count('H'))/total_games, 'A':((df1['Side'].tolist()).count('A'))/total_games}
-# print(advantage)
-# ppg['f'] = sum(f_scores)/len(f_scores)
-# ppg['k'] = sum(k_scores)/len(k_scores)
-# total_games = wins['k'] + wins['f']
-# win_perc = {'f':0, 'k':0}
-# win_perc['f'] = "{:.2%}".format(wins['f']/total_games)
-# win_perc['k'] = "{:.2%}".format(wins['k']/total_games)
 
-# dfstats.loc['Total Wins'] = [stats['f']['overall']['wins'], stats['k']['overall']['wins'], pd.to_datetime(pd.NaT).date(), None]
-# dfstats.loc['PPG'] = [stats['f']['overall']['ppg'], stats['k']['overall']['ppg'], pd.to_datetime(pd.NaT).date(), None]
-# dfstats.loc['Win % (H)'] = [percentify(stats['f']['H']['win_perc']), percentify(stats['k']['H']['win_perc']), pd.to_datetime(pd.NaT).date(), None]
-# dfstats.loc['Win % (A)'] = [percentify(stats['f']['A']['win_perc']), percentify(stats['k']['A']['win_perc']), pd.to_datetime(pd.NaT).date(), None]
-# dfstats.loc['Overall Win%'] = [percentify(stats['f']['overall']['win_perc']), percentify(stats['k']['overall']['win_perc']), pd.to_datetime(pd.NaT).date(), None]
+
+
+
+class Side:
+	def __init__(self, w=0, l=0, pts=0):
+		self.wins = w
+		self.losses = l
+		self.points = pts
+		self._games = self.wins + self.losses
+		self._win_perc = 0
+		self._ppg = 0
+
+	@property
+	def win_perc(self):
+		self._win_perc = self.wins/(self.games)
+		return(self._win_perc)
+
+	@property
+	def ppg(self):
+		self._ppg = self.points/(self.games)
+		return(self._ppg)
+
+	@property
+	def games(self):
+		self._games = self.wins+self.losses
+		return(self._games)
