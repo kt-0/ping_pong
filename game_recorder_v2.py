@@ -15,14 +15,14 @@ class Side:
 	def __init__(self, w=0, l=0, pts=0):
 		self.wins = w
 		self.losses = l
-		self._points = pts
+		self.points = pts
 		self._games = self.wins + self.losses
 		self._win_perc = 0
 		self._ppg = 0
 
 	@property
 	def win_perc(self):
-		self._win_perc = self.wins/self.games
+		self._win_perc = (self.wins/self.games)*100
 		return(self._win_perc)
 
 	@property
@@ -34,6 +34,10 @@ class Side:
 	def games(self):
 		self._games = self.wins + self.losses
 		return(self._games)
+
+	# @property
+	# def points(self):
+	# 	return(self._points)
 
 	# @property
 	# def wins(self):
@@ -48,9 +52,7 @@ class Side:
 	# def losses(self):
 	# 	return self._losses
 
-	# @property
-	# def points(self):
-	# 	return(self._points)
+
 	#
 	# @points.setter
 	# def points(self, value):
@@ -61,10 +63,11 @@ class Player:
 
 		self._a = away
 		self._h = home
-		self._wins = self._a.wins + self._h.wins
-		self._losses = self._a.losses + self._h.losses
+		self._wins = self.a.wins + self.h.wins
+		self._losses = self.a.losses + self.h.losses
 		self._win_perc = 0
 		self._ppg = 0
+		self._points = self.a.points + self.h.points
 		self._games = self._wins + self._losses
 		self.streak = Streak()
 
@@ -85,7 +88,7 @@ class Player:
 
 	@property
 	def win_perc(self):
-		self._win_perc = self.wins/self.games
+		self._win_perc = (self.wins/self.games)*100
 		return(self._win_perc)
 
 	@property
@@ -100,6 +103,11 @@ class Player:
 	def games(self):
 		self._games = self.wins + self.losses
 		return(self._games)
+
+	@property
+	def points(self):
+		self._points = self.a.points + self.h.points
+		return(self._points)
 
 
 
@@ -150,34 +158,6 @@ def main():
 
 	total_games = df1.shape[0]
 
-	# stats = {
-	# 	'f': {
-	# 		'A': {'wins':0,'win_perc':0,'ppg':0},
-	# 		'H': {'wins':0,'win_perc':0,'ppg':0},
-	# 		'overall': {
-	# 			'wins':0,
-	# 			'win_perc':0,
-	# 			'ppg': nr(sum(f_scores)/total_games)
-	# 			},
-	# 		'streak': {
-	# 			'current':0,
-	# 			'best': 0
-	# 			}
-	# 		},
-	# 	'k':{
-	# 		'A': {'wins':0,'win_perc':0,'ppg':0},
-	# 		'H': {'wins':0,'win_perc':0,'ppg':0},
-	# 		'overall': {
-	# 			'wins':0,
-	# 			'win_perc':0,
-	# 			'ppg':nr(sum(k_scores)/total_games)
-	# 			},
-	# 		'streak': {
-	# 			'current':0,
-	# 			'best': 0
-	# 			}
-	# 		}
-	# 	}
 
 	#print(sides)
 	opposite = str.maketrans("fkAH", "kfHA")
@@ -224,17 +204,6 @@ def main():
 					fritz.a.points = fritz.a.points+f
 
 
-	for x in stats:
-		y = x.translate(opposite)
-		home,away = 'H','A'
-		stats[x][away]['ppg'] = stats[x][away]['ppg']/(stats[x][away]['wins']+stats[y][home]['wins'])
-		stats[x][home]['ppg'] = stats[x][home]['ppg']/(stats[x][home]['wins']+stats[y][away]['wins'])
-		stats[x][away]['win_perc'] = (stats[x][away]['wins']/(stats[x][away]['wins']+stats[y][home]['wins']))*100
-		stats[y][home]['win_perc'] = (stats[y][home]['wins']/(stats[y][home]['wins']+stats[x][away]['wins']))*100
-
-		stats[x]['overall']['wins'] = (stats[x][home]['wins']+stats[x][away]['wins'])
-		stats[x]['overall']['win_perc'] = (stats[x]['overall']['wins']/total_games)*100
-
 	multi_ind = [
 		np.array(["wins", "wins", "wins", "win%", "win%", "win%", "ppg", "ppg", "ppg", "streak", "streak"]),
 		np.array(["H", "A", "overall", "H", "A", "overall", "H", "A", "overall", "Current", "Best"])]
@@ -242,19 +211,18 @@ def main():
 	dfstats = pd.DataFrame(
 		{
 		'F':[
-			stats['f']['H']['wins'], stats['f']['A']['wins'], stats['f']['overall']['wins'],
-			nr(stats['f']['H']['win_perc']), nr(stats['f']['A']['win_perc']),
-			nr(stats['f']['overall']['win_perc']), nr(stats['f']['H']['ppg']),
-			nr(stats['f']['A']['ppg']), nr(stats['f']['overall']['ppg']),
-			nr(stats['f']['streak']['current'],0), nr(stats['f']['streak']['best'],0)],
-		'K':[
-			stats['k']['H']['wins'], stats['k']['A']['wins'], stats['k']['overall']['wins'],
-			nr(stats['k']['H']['win_perc']), nr(stats['k']['A']['win_perc']),
-			nr(stats['k']['overall']['win_perc']), nr(stats['k']['H']['ppg']),
-			nr(stats['k']['A']['ppg']), nr(stats['k']['overall']['ppg']),
-			nr(stats['k']['streak']['current'],0), nr(stats['k']['streak']['best'],0)]
+			fritz.h.wins, fritz.a.wins, fritz.wins,
+			nr(fritz.h.win_perc), nr(fritz.a.win_perc), nr(fritz.win_perc),
+			nr(fritz.h.ppg), nr(fritz.a.ppg), nr(fritz.ppg),
+			fritz.streak.current, fritz.streak.best
+			],
+		'K': [
+			ken.h.wins, ken.a.wins, ken.wins,
+			nr(ken.h.win_perc), nr(ken.a.win_perc),nr(ken.win_perc),
+			nr(ken.h.ppg), nr(ken.a.ppg), nr(ken.ppg),
+			ken.streak.current, ken.streak.best
+			]
 		}, index=multi_ind)
-
 
 	curr_games = df1.shape[0]
 
