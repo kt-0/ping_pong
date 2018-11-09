@@ -5,11 +5,103 @@ import datetime, math, random
 
 # TODO: add timestamps, then use them for multi index, then put the timestamps in a hidden column
 
-class Stats:
+class Streak:
+	def __init__(self, curr=0, b=0):
+		self.current = curr
+		self.best = b
 
-	class H:
 
-	H = H()
+class Side:
+	def __init__(self, w=0, l=0, pts=0):
+		self.wins = w
+		self.losses = l
+		self._points = pts
+		self._games = self.wins + self.losses
+		self._win_perc = 0
+		self._ppg = 0
+
+	@property
+	def win_perc(self):
+		self._win_perc = self.wins/self.games
+		return(self._win_perc)
+
+	@property
+	def ppg(self):
+		self._ppg = self.points/self.games
+		return(self._ppg)
+
+	@property
+	def games(self):
+		self._games = self.wins + self.losses
+		return(self._games)
+
+	# @property
+	# def wins(self):
+	# 	return self._wins
+	#
+	# @wins.setter
+	# def wins(self, value):
+	# 	self._wins = self._wins + value
+	# 	return()
+	#
+	# @property
+	# def losses(self):
+	# 	return self._losses
+
+	# @property
+	# def points(self):
+	# 	return(self._points)
+	#
+	# @points.setter
+	# def points(self, value):
+	# 	self._points = self._points + value
+
+class Player:
+	def __init__(self, home=Side(), away=Side()):
+
+		self._a = away
+		self._h = home
+		self._wins = self._a.wins + self._h.wins
+		self._losses = self._a.losses + self._h.losses
+		self._win_perc = 0
+		self._ppg = 0
+		self._games = self._wins + self._losses
+		self.streak = Streak()
+
+	@property
+	def wins(self):
+		self._wins = self.a.wins + self.h.wins
+		return(self._wins)
+
+	@property
+	def losses(self):
+		self._losses = self.a.losses + self.h.losses
+		return(self._losses)
+
+	@property
+	def ppg(self):
+		self._ppg = self.points/self.games
+		return(self._ppg)
+
+	@property
+	def win_perc(self):
+		self._win_perc = self.wins/self.games
+		return(self._win_perc)
+
+	@property
+	def a(self):
+		return(self._a)
+
+	@property
+	def h(self):
+		return(self._h)
+
+	@property
+	def games(self):
+		self._games = self.wins + self.losses
+		return(self._games)
+
+
 
 def main():
 
@@ -53,36 +145,39 @@ def main():
 	k_scores = df1['Ken'].tolist()
 	sides = df1['Side'].tolist()
 
+	ken = Player()
+	fritz = Player()
+
 	total_games = df1.shape[0]
 
-	stats = {
-		'f': {
-			'A': {'wins':0,'win_perc':0,'ppg':0},
-			'H': {'wins':0,'win_perc':0,'ppg':0},
-			'overall': {
-				'wins':0,
-				'win_perc':0,
-				'ppg': nr(sum(f_scores)/total_games)
-				},
-			'streak': {
-				'current':0,
-				'best': 0
-				}
-			},
-		'k':{
-			'A': {'wins':0,'win_perc':0,'ppg':0},
-			'H': {'wins':0,'win_perc':0,'ppg':0},
-			'overall': {
-				'wins':0,
-				'win_perc':0,
-				'ppg':nr(sum(k_scores)/total_games)
-				},
-			'streak': {
-				'current':0,
-				'best': 0
-				}
-			}
-		}
+	# stats = {
+	# 	'f': {
+	# 		'A': {'wins':0,'win_perc':0,'ppg':0},
+	# 		'H': {'wins':0,'win_perc':0,'ppg':0},
+	# 		'overall': {
+	# 			'wins':0,
+	# 			'win_perc':0,
+	# 			'ppg': nr(sum(f_scores)/total_games)
+	# 			},
+	# 		'streak': {
+	# 			'current':0,
+	# 			'best': 0
+	# 			}
+	# 		},
+	# 	'k':{
+	# 		'A': {'wins':0,'win_perc':0,'ppg':0},
+	# 		'H': {'wins':0,'win_perc':0,'ppg':0},
+	# 		'overall': {
+	# 			'wins':0,
+	# 			'win_perc':0,
+	# 			'ppg':nr(sum(k_scores)/total_games)
+	# 			},
+	# 		'streak': {
+	# 			'current':0,
+	# 			'best': 0
+	# 			}
+	# 		}
+	# 	}
 
 	#print(sides)
 	opposite = str.maketrans("fkAH", "kfHA")
@@ -91,25 +186,42 @@ def main():
 			f = x[0]
 			k = x[1]
 			side = x[2]
-			opp = side.translate(opposite)
-			#print(opp)
+
 			if f>k:
-				stats['f'][side]['wins'] = stats['f'][side]['wins']+1
-				stats['f'][side]['ppg'] = (stats['f'][side]['ppg']+f)
-				stats['k'][opp]['ppg'] = (stats['k'][opp]['ppg']+k)
-				stats['f']['streak']['current'] = stats['f']['streak']['current']+1
-				stats['k']['streak']['current'] = 0
-				if (stats['f']['streak']['current'] > stats['f']['streak']['best']):
-					stats['f']['streak']['best'] = stats['f']['streak']['current']
+				ken.streak.current = 0
+				fritz.streak.current = fritz.streak.current+1
+				if (fritz.streak.current>fritz.streak.best):
+					fritz.streak.best = fritz.streak.current
+				if side == 'A':
+					fritz.a.wins = fritz.a.wins+1
+					fritz.a.points = fritz.a.points+f
+					ken.h.losses = ken.h.losses+1
+					ken.h.points = ken.h.points+k
+
+				else:
+					fritz.h.wins = fritz.h.wins+1
+					fritz.h.points = fritz.h.points+f
+					ken.a.losses = ken.a.losses+1
+					ken.a.points = ken.a.points+k
 
 			else:
-				stats['k'][side]['wins'] = stats['k'][side]['wins']+1
-				stats['k'][side]['ppg'] = (stats['k'][side]['ppg']+k)
-				stats['f'][opp]['ppg'] = (stats['f'][opp]['ppg']+f)
-				stats['k']['streak']['current'] = stats['k']['streak']['current']+1
-				stats['f']['streak']['current'] = 0
-				if (stats['k']['streak']['current'] > stats['k']['streak']['best']):
-					stats['k']['streak']['best'] = stats['k']['streak']['current']
+				fritz.streak.current = 0
+				ken.streak.current = ken.streak.current+1
+
+				if (ken.streak.current>ken.streak.best):
+					ken.streak.best = ken.streak.current
+
+				if side == 'A':
+					ken.a.wins = ken.a.wins+1
+					ken.a.points = ken.a.points+k
+					fritz.h.losses = fritz.h.losses+1
+					fritz.h.points = fritz.h.points+f
+
+				else:
+					ken.h.wins = ken.h.wins+1
+					ken.h.points = ken.h.points+k
+					fritz.a.losses = fritz.a.losses+1
+					fritz.a.points = fritz.a.points+f
 
 
 	for x in stats:
@@ -335,7 +447,7 @@ def write_xlsx(df, dfstats):
 
 	#worksheet.set_column('A:A{}'.format(game_rows), None, None, {'hidden': True})
 
-	worksheet.write(win_index, 0, dfstats.index[0][0], win_head_format)
+	worksheet.write(win_index, 0, dfstats.index[0][0], stat_head_format)
 	#worksheet.merge_range('B4:D4', 'Merged Range', merge_format)
 
 
@@ -348,55 +460,3 @@ def write_xlsx(df, dfstats):
 
 
 main()
-
-class Playerstats:
-	def __init__(self, home=Side(), away=Side()):
-
-		self.a = away
-		self.h = home
-		self._wins = self.a.wins + self.h.wins
-		self._win_perc = (self.a.wins+self.h.wins)/(self.a.games+self.h.games)
-
-	@property
-	def wins(self):
-		self._wins = self.a.wins + self.h.wins
-		return(self._wins)
-
-	@property
-	def ppg(self):
-		self._ppg = self.points/(self.wins+self.losses)
-		return(self._ppg)
-
-	@property
-	def win_perc(self):
-		self._win_perc = (self.a.wins+self.h.wins)/(self.a.games+self.h.games)
-		return(self._win_perc)
-
-
-
-
-
-
-class Side:
-	def __init__(self, w=0, l=0, pts=0):
-		self.wins = w
-		self.losses = l
-		self.points = pts
-		self._games = self.wins + self.losses
-		self._win_perc = 0
-		self._ppg = 0
-
-	@property
-	def win_perc(self):
-		self._win_perc = self.wins/(self.games)
-		return(self._win_perc)
-
-	@property
-	def ppg(self):
-		self._ppg = self.points/(self.games)
-		return(self._ppg)
-
-	@property
-	def games(self):
-		self._games = self.wins+self.losses
-		return(self._games)
