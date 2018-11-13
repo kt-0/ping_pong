@@ -5,81 +5,48 @@ import datetime, math, random
 
 # TODO: add timestamps, then use them for multi index, then put the timestamps in a hidden column
 
-class Streak:
-	def __init__(self, curr=0, b=0):
-		self.current = curr
-		self.best = b
 
-
-class Side:
+class Stats:
 	def __init__(self, w=0, l=0, pts=0):
-		self.wins = w
-		self.losses = l
-		self.points = pts
-		self._games = self.wins + self.losses
+
+		self._wins = w
+		self._losses = l
 		self._win_perc = 0
 		self._ppg = 0
-
-	@property
-	def win_perc(self):
-		self._win_perc = (self.wins/self.games)*100
-		return(self._win_perc)
-
-	@property
-	def ppg(self):
-		self._ppg = self.points/self.games
-		return(self._ppg)
-
-	@property
-	def games(self):
-		self._games = self.wins + self.losses
-		return(self._games)
-
-	# @property
-	# def points(self):
-	# 	return(self._points)
-
-	# @property
-	# def wins(self):
-	# 	return self._wins
-	#
-	# @wins.setter
-	# def wins(self, value):
-	# 	self._wins = self._wins + value
-	# 	return()
-	#
-	# @property
-	# def losses(self):
-	# 	return self._losses
-
-
-	#
-	# @points.setter
-	# def points(self, value):
-	# 	self._points = self._points + value
-
-class Player:
-	def __init__(self, home=Side(), away=Side()):
-
-		self._a = away
-		self._h = home
-		self._wins = self.a.wins + self.h.wins
-		self._losses = self.a.losses + self.h.losses
-		self._win_perc = 0
-		self._ppg = 0
-		self._points = self.a.points + self.h.points
+		self._points = pts
 		self._games = self._wins + self._losses
-		self.streak = Streak()
 
 	@property
 	def wins(self):
-		self._wins = self.a.wins + self.h.wins
+		return(self._wins)
+
+	@wins.setter
+	def wins(self, value):
+		self._wins = value
 		return(self._wins)
 
 	@property
 	def losses(self):
-		self._losses = self.a.losses + self.h.losses
 		return(self._losses)
+
+	@losses.setter
+	def losses(self, value):
+		self._losses = value
+		return(self._losses)
+
+	@property
+	def points(self):
+		return(self._points)
+
+	@points.setter
+	def points(self, value):
+		self._points = value
+		return(self._points)
+
+	@property
+	def games(self):
+		self._games = self._wins + self._losses
+		return(self._games)
 
 	@property
 	def ppg(self):
@@ -88,26 +55,36 @@ class Player:
 
 	@property
 	def win_perc(self):
-		self._win_perc = (self.wins/self.games)*100
-		return(self._win_perc)
+		self._win_perc = self._wins/self.games
 
-	@property
-	def a(self):
-		return(self._a)
 
-	@property
-	def h(self):
-		return(self._h)
+class Player(Stats):
+	def __init__(self):
+		Stats.__init__(self)
+		self.h = Stats()
+		self.a = Stats()
+		self.streak = Streak()
 
 	@property
 	def games(self):
-		self._games = self.wins + self.losses
-		return(self._games)
+		return(self.a.games+self.h.games)
 
 	@property
-	def points(self):
-		self._points = self.a.points + self.h.points
-		return(self._points)
+	def wins(self):
+		return(self.a.wins+self.h.wins)
+
+	@property
+	def ppg(self):
+		return((self.a.points+self.h.points)/(self.a.games/self.h.games))
+
+	@property
+	def win_perc(self):
+		return((self.a.wins+self.h.wins)/(self.a.games+self.h.games))
+
+class Streak:
+	def __init__(self, curr=0, b=0):
+		self.current = curr
+		self.best = b
 
 
 
@@ -170,7 +147,7 @@ def main():
 			if f>k:
 				ken.streak.current = 0
 				fritz.streak.current = fritz.streak.current+1
-				if (fritz.streak.current>fritz.streak.best):
+				if (fritz.streak.current > fritz.streak.best):
 					fritz.streak.best = fritz.streak.current
 				if side == 'A':
 					fritz.a.wins = fritz.a.wins+1
@@ -184,7 +161,7 @@ def main():
 					ken.a.losses = ken.a.losses+1
 					ken.a.points = ken.a.points+k
 
-			else:
+			if k>f:
 				fritz.streak.current = 0
 				ken.streak.current = ken.streak.current+1
 
