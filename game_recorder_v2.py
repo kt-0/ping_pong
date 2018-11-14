@@ -94,18 +94,12 @@ def main():
 	dates = pd.DatetimeIndex(df1.Date.dt.date, name='Date')
 	start_games = df1.shape[0]
 	df1.index = dates
-
 	df1.drop(columns='Date',inplace=True)
-	#print(df1.head())
 
 	f_score = get_score('Fritz')
 	k_score = get_score('Ken')
 	side = input('Winner side? H/A').upper()
-	#start_date = pd.to_datetime('10/11/18', format="%m/%d/%y")
-	#df1['Date'].fillna(start_date, inplace=True)
-	#df1['Side'].fillna(lambda x: rand_side(['H','A']), inplace=True)
 
-	#df1['Side'] = df1['Side'].apply(lambda x: rand_side(['H','A']))
 	while ((side != 'A') and (side != 'H')):
 		side = input('Winner side? H/A').upper()
 
@@ -113,8 +107,6 @@ def main():
 
 	dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=now)
 	df1 = df1.append(dfnew, sort=False)
-	#df1.loc[pd.datetime.today().date()] = [f_score, k_score, side]
-
 	more = input('More scores to enter? (Y/N)').lower()
 
 	while more[:1] == 'y':
@@ -133,13 +125,7 @@ def main():
 	ken = Player()
 	fritz = Player()
 
-	total_games = df1.shape[0]
-
-
-	#print(sides)
-	opposite = str.maketrans("fkAH", "kfHA")
-
-	for i,x in enumerate(zip(f_scores, k_scores, sides)):
+	for _,x in enumerate(zip(f_scores, k_scores, sides)):
 			f = x[0]
 			k = x[1]
 			side = x[2]
@@ -270,7 +256,7 @@ def write_xlsx(df, dfstats):
 		'bottom_color': mid_blue,
 		'left_color': grey,
 		'right_color': grey,
-		'font_name': 'Helvetica Neue',
+		'font_name': 'AppleGothic',
 		'font_size':12 })
 
 	odd_side_format = workbook.add_format({
@@ -280,7 +266,7 @@ def write_xlsx(df, dfstats):
 		'bottom_color': mid_blue,
 		'left_color': grey,
 		'right_color': grey,
-		'font_name': 'Helvetica Neue',
+		'font_name': 'AppleGothic',
 		'font_size':10,
 		'italic':True })
 
@@ -291,13 +277,13 @@ def write_xlsx(df, dfstats):
 		'bottom_color': mid_blue,
 		'left_color': grey,
 		'right_color': grey,
-		'font_name': 'Helvetica Neue',
+		'font_name': 'AppleGothic',
 		'font_size':10,
 		'italic':True,
 		'num_format':'mm/dd/yy'})
 
 	main_format = workbook.add_format({
-		'font_name': 'Helvetica Neue',
+		'font_name': 'AppleGothic',
 		'font_size':12})
 
 	head_format = workbook.add_format({
@@ -314,7 +300,7 @@ def write_xlsx(df, dfstats):
 		'border': 1,
 		'font_size': 10,
 		'italic': True,
-		'font_name': 'Helvetica Neue',
+		'font_name': 'AppleGothic',
 		'num_format': 'mm/dd/yy'})
 
 	game_format = workbook.add_format({'num_format': '#,##0'})
@@ -323,14 +309,14 @@ def write_xlsx(df, dfstats):
 	tot_wins_format = workbook.add_format({
 		'top':1,
 		'font_size':14,
-		'font_name':'Helvetica Neue',
+		'font_name':'AppleGothic',
 		'bg_color':'#f2db87',
 		'num_format': '#,##0'})
 
 	side_format = workbook.add_format({
 		'border_color': grey,
 		'border':1,
-		'font_name': 'Helvetica Neue',
+		'font_name': 'AppleGothic',
 		'font_size':10,
 		'italic':True })
 
@@ -362,20 +348,24 @@ def write_xlsx(df, dfstats):
 	for i in range(1, game_rows+1, 2):
 
 		x = i-1
+		d = df.index[x]
 		f = df.iloc[x, 0]
 		k = df.iloc[x, 1]
-		#d = df.iloc[x, 2]
 		s = df.iloc[x, 2]
 
+		print("d: ", d, " f: ", f, " k: ", k)
+		worksheet.write_datetime(i, 0, d, odd_date_format)
 		worksheet.write(i, 1, f, odd_row_format)
 		worksheet.write(i, 2, k, odd_row_format)
 
-		#worksheet.write_datetime(i, 3, d, odd_date_format)
+		#worksheet.write_datetime(i, 0, d, odd_date_format)
 		worksheet.write(i, 3, s, odd_side_format)
 
 	for i in range(2, game_rows, 2):
 		x = i-1
 		s = df.iloc[x, 2]
+		d = df.index[x]
+		#worksheet.write_datetime(i, 0, d, odd_date_format)
 		worksheet.write(i, 3, s, side_format)
 	# for i in range(2, game_rows+1, 2):
 	# 	x = i-1
