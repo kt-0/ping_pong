@@ -55,7 +55,8 @@ class Stats:
 
 	@property
 	def win_perc(self):
-		self._win_perc = self._wins/self.games
+		self._win_perc = (self._wins/self.games)*100
+		return(self._win_perc)
 
 
 class Player(Stats):
@@ -75,17 +76,16 @@ class Player(Stats):
 
 	@property
 	def ppg(self):
-		return((self.a.points+self.h.points)/(self.a.games/self.h.games))
+		return((self.a.points+self.h.points)/(self.a.games+self.h.games))
 
 	@property
 	def win_perc(self):
-		return((self.a.wins+self.h.wins)/(self.a.games+self.h.games))
+		return(((self.a.wins+self.h.wins)/(self.a.games+self.h.games))*100)
 
 class Streak:
 	def __init__(self, curr=0, b=0):
 		self.current = curr
 		self.best = b
-
 
 
 def main():
@@ -139,7 +139,7 @@ def main():
 	#print(sides)
 	opposite = str.maketrans("fkAH", "kfHA")
 
-	for i,x in enumerate(zip(f_scores,k_scores,sides)):
+	for i,x in enumerate(zip(f_scores, k_scores, sides)):
 			f = x[0]
 			k = x[1]
 			side = x[2]
@@ -155,7 +155,7 @@ def main():
 					ken.h.losses = ken.h.losses+1
 					ken.h.points = ken.h.points+k
 
-				else:
+				if side == 'H':
 					fritz.h.wins = fritz.h.wins+1
 					fritz.h.points = fritz.h.points+f
 					ken.a.losses = ken.a.losses+1
@@ -165,7 +165,7 @@ def main():
 				fritz.streak.current = 0
 				ken.streak.current = ken.streak.current+1
 
-				if (ken.streak.current>ken.streak.best):
+				if (ken.streak.current > ken.streak.best):
 					ken.streak.best = ken.streak.current
 
 				if side == 'A':
@@ -174,12 +174,17 @@ def main():
 					fritz.h.losses = fritz.h.losses+1
 					fritz.h.points = fritz.h.points+f
 
-				else:
+				if side == 'H':
 					ken.h.wins = ken.h.wins+1
 					ken.h.points = ken.h.points+k
 					fritz.a.losses = fritz.a.losses+1
 					fritz.a.points = fritz.a.points+f
 
+
+	print("ken wins: ", ken.wins, " a: ", ken.a.wins, " h: ", ken.h.wins)
+	print("ken ppg: ", ken.ppg, " a: ", ken.a.ppg, " h: ", ken.h.ppg)
+	print("ken win%: ", ken.win_perc, " a: ", ken.a.win_perc, " h: ", ken.h.win_perc)
+	print("ken.streak.best: ", ken.streak.best, " ken.streak.current: ", ken.streak.current)
 
 	multi_ind = [
 		np.array(["wins", "wins", "wins", "win%", "win%", "win%", "ppg", "ppg", "ppg", "streak", "streak"]),
