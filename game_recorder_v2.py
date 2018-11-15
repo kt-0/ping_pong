@@ -245,98 +245,64 @@ def write_xlsx(df, dfstats):
 	#tot_games_row = (df.shape[0] - 1)
 	#h_vs_a_row = df.shape[0]
 
+
 	light_blue, dark_blue, mid_blue = '#D9E1F1', '#4674C1', '#8FAAD9'
 	grey, greyish_blue = '#C9C9C9', '#b6d2ed'
-	yellow = '#FED330'
-	maroon = '#A9180F'
-	odd_row_format = workbook.add_format({
+	yellow, maroon = '#FED330', '#A9180F'
+
+	base = {
+		'font_name': 'AppleGothic',
+		'align': 'center',
+		'font_size': 10
+	}
+
+	odd_base = {**base,
 		'bg_color': light_blue,
-		'border':1,
+		'border': 1,
 		'top_color': mid_blue,
 		'bottom_color': mid_blue,
 		'left_color': grey,
 		'right_color': grey,
-		'font_name': 'AppleGothic',
-		'font_size':12 })
+			}
 
-	odd_side_format = workbook.add_format({
-		'bg_color': light_blue,
-		'border':1,
-		'top_color': mid_blue,
-		'bottom_color': mid_blue,
-		'left_color': grey,
-		'right_color': grey,
-		'font_name': 'AppleGothic',
-		'font_size':10,
-		'italic':True })
+	date = {**base, 'italic': True, 'num_format': 'mm/dd/yy'}
+	game = {**base, 'align': 'right', 'num_format': '#,##0', 'font_size': 12}
+	side = {**base, 'italic': True}
+	stat = {**base, 'num_format': '0.000'}
 
-	odd_date_format = workbook.add_format({
-		'bg_color': light_blue,
-		'border':1,
-		'top_color': mid_blue,
-		'bottom_color': mid_blue,
-		'left_color': grey,
-		'right_color': grey,
-		'font_name': 'AppleGothic',
-		'font_size':10,
-		'italic':True,
-		'num_format':'mm/dd/yy'})
+	odd_side = {**odd_base, **side}
+	odd_date = {**odd_base, **date}
+	odd_game = {**odd_base, **game}
 
-	main_format = workbook.add_format({
-		'font_name': 'AppleGothic',
-		'font_size':12})
-
-	head_format = workbook.add_format({
+	head = {**base,
 		'font_size': 14,
-		'font_name': 'AppleGothic',
 		'font_color': 'white',
 		'bg_color': dark_blue,
 		'bold': True,
 		'bottom': 1,
-		'center_across': True })
+		}
+	stat_head = {**head, 'valign': 'vcenter'}
 
-	date_format = workbook.add_format({
-		'border_color': grey,
-		'border': 1,
-		'font_size': 10,
-		'italic': True,
-		'font_name': 'AppleGothic',
-		'num_format': 'mm/dd/yy'})
+	date_format = workbook.add_format(date)
+	odd_date_format = workbook.add_format(odd_date)
+	game_format = workbook.add_format(game)
+	stat_head_format = workbook.add_format(stat_head)
+	odd_game_format = workbook.add_format(odd_game)
+	head_format = workbook.add_format(head)
+	odd_side_format = workbook.add_format(odd_side)
+	stat_format = workbook.add_format(stat)
+	side_format = workbook.add_format(side)
 
-	game_format = workbook.add_format({'num_format': '#,##0'})
-	ppg_format = workbook.add_format({'num_format': '0.000'})
 	win_format = workbook.add_format({'bold': True, 'italic': True})
-	tot_wins_format = workbook.add_format({
-		'top':1,
-		'font_size':14,
-		'font_name':'AppleGothic',
-		'bg_color':'#f2db87',
-		'num_format': '#,##0'})
 
-	side_format = workbook.add_format({
-		'border_color': grey,
-		'border':1,
-		'font_name': 'AppleGothic',
-		'font_size':10,
-		'italic':True })
-
-	stat_head_format = workbook.add_format({
+	totals_format = workbook.add_format({
+		'top': 1,
 		'font_size': 14,
 		'font_name': 'AppleGothic',
-		'font_color': 'white',
-		'bg_color': dark_blue,
-		'bold': True,
-		'align': 'center',
-		'valign': 'vcenter'
-	})
+		'bg_color': '#f2db87',
+		'num_format': '#,##0'
+		})
 
-	worksheet.set_column("A:E", cell_format=main_format)
-
-	#TODO: implement this TODO TODO
-	# worksheet.set_column("A1:A{}".format(game_rows), cell_format=date_format)
-	# TODO TODO ^^^^^^^
-
-	#worksheet.set_column("$B$1:$B$1", None, cell_format=head_format)
 
 	# format the head
 	for col_num, value in enumerate(df.columns.values):
@@ -353,10 +319,10 @@ def write_xlsx(df, dfstats):
 		k = df.iloc[x, 1]
 		s = df.iloc[x, 2]
 
-		print("d: ", d, " f: ", f, " k: ", k)
+		#print("d: ", d, " f: ", f, " k: ", k)
 		worksheet.write_datetime(i, 0, d, odd_date_format)
-		worksheet.write(i, 1, f, odd_row_format)
-		worksheet.write(i, 2, k, odd_row_format)
+		worksheet.write(i, 1, f, odd_game_format)
+		worksheet.write(i, 2, k, odd_game_format)
 
 		#worksheet.write_datetime(i, 0, d, odd_date_format)
 		worksheet.write(i, 3, s, odd_side_format)
@@ -373,7 +339,8 @@ def write_xlsx(df, dfstats):
 
 	# for i in range(1, len(df.columns)-1):
 	# 	x = i-1
-	# 	worksheet.write(tot_wins_row, i, df.iloc[-4, x], tot_wins_format)
+	# 	worksheet.write(tot_wins_row, i, df.iloc[-4, x], totals_format)
+
 
 	for i in range(2, game_rows+2):
 
@@ -390,12 +357,6 @@ def write_xlsx(df, dfstats):
 	worksheet.write(win_index, 0, dfstats.index[0][0], stat_head_format)
 	#worksheet.merge_range('B4:D4', 'Merged Range', merge_format)
 
-
-	# print("index[0]: ", dfstats.index[0])
-	# print("index[1]: ", dfstats.index[1])
-	# print("index[0][0]: ",dfstats.index[0][0])
-	# print("index[0][1]: ",dfstats.index[0][1])
-	# print("index[1][1]: ",dfstats.index[1][1])
 	writer.save()
 
 
