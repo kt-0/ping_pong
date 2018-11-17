@@ -167,11 +167,6 @@ def main():
 					fritz.a.points = fritz.a.points+f
 
 
-	print("ken wins: ", ken.wins, " a: ", ken.a.wins, " h: ", ken.h.wins)
-	print("ken ppg: ", ken.ppg, " a: ", ken.a.ppg, " h: ", ken.h.ppg)
-	print("ken win%: ", ken.win_perc, " a: ", ken.a.win_perc, " h: ", ken.h.win_perc)
-	print("ken.streak.best: ", ken.streak.best, " ken.streak.current: ", ken.streak.current)
-
 	multi_ind = [
 		np.array(["wins", "wins", "wins", "win%", "win%", "win%", "ppg", "ppg", "ppg", "streak", "streak"]),
 		np.array(["H", "A", "overall", "H", "A", "overall", "H", "A", "overall", "Current", "Best"])]
@@ -294,7 +289,6 @@ def write_xlsx(df, dfstats):
 	side_format = workbook.add_format(side)
 
 	win_format = workbook.add_format({'bold': True, 'italic': True})
-
 	totals_format = workbook.add_format({
 		'top': 1,
 		'font_size': 14,
@@ -310,32 +304,30 @@ def write_xlsx(df, dfstats):
 		#print("col_num: ", col_num, " value: ", value)
 		worksheet.write(0, col_num + 1, value, head_format)
 
-	# light blue fill on every other row
-	for i in range(1, game_rows+1, 2):
+	for i in range(1, game_rows+1):
 
 		x = i-1
 		d = df.index[x]
-		f = df.iloc[x, 0]
-		k = df.iloc[x, 1]
-		s = df.iloc[x, 2]
+		f, k, s = df.iloc[x]
 
-		#print("d: ", d, " f: ", f, " k: ", k)
-		worksheet.write_datetime(i, 0, d, odd_date_format)
-		worksheet.write(i, 1, f, odd_game_format)
-		worksheet.write(i, 2, k, odd_game_format)
+		# light blue fill on every other row
+		if i%2 == 0:
+			g_format = odd_game_format
+			dt_format = odd_date_format
+			s_format = odd_side_format
 
-		#worksheet.write_datetime(i, 0, d, odd_date_format)
-		worksheet.write(i, 3, s, odd_side_format)
+		else:
+			g_format = game_format
+			dt_format = date_format
+			s_format = side_format
 
-	for i in range(2, game_rows, 2):
-		x = i-1
-		s = df.iloc[x, 2]
-		d = df.index[x]
-		#worksheet.write_datetime(i, 0, d, odd_date_format)
-		worksheet.write(i, 3, s, side_format)
-	# for i in range(2, game_rows+1, 2):
-	# 	x = i-1
-	# 	worksheet.write_datetime(i, 3, df.iloc[x, 2], date_format)
+		worksheet.write_datetime(i, 0, d, dt_format)
+		worksheet.write(i, 1, f, g_format)
+		worksheet.write(i, 2, k, g_format)
+		worksheet.write(i, 3, s, s_format)
+
+	# set the width of the index (date) column
+	worksheet.set_column(0, 0, 20)
 
 	# for i in range(1, len(df.columns)-1):
 	# 	x = i-1
@@ -353,6 +345,7 @@ def write_xlsx(df, dfstats):
 
 
 	#worksheet.set_column('A:A{}'.format(game_rows), None, None, {'hidden': True})
+
 
 	worksheet.write(win_index, 0, dfstats.index[0][0], stat_head_format)
 	#worksheet.merge_range('B4:D4', 'Merged Range', merge_format)
