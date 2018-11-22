@@ -82,6 +82,7 @@ class Player(Stats):
 	def win_perc(self):
 		return(((self.a.wins+self.h.wins)/(self.a.games+self.h.games))*100)
 
+
 class Streak:
 	def __init__(self, curr=0, b=0):
 		self.current = curr
@@ -197,6 +198,7 @@ def main():
 
 	write_xlsx(df1, dfstats)
 
+
 ############
 # modular functions
 ############
@@ -207,18 +209,22 @@ def nr(n, decimals=2):
 		return math.floor(expoN) / 10 ** decimals
 	return math.ceil(expoN) / 10 ** decimals
 
+
 def get_score(who):
 	x = ''
 	while x.isdigit() == False:
 		x = input('Enter {}s score: '.format(who))
 	return(int(x))
 
+
 def rand_side(x):
 	return(random.choice(x))
+
 
 def percentify(x):
 	x = nr(x)
 	return("{:.2%}".format(x))
+
 
 ############
 # Function for writing/saving the dataframes to excel
@@ -246,7 +252,7 @@ def write_xlsx(df, dfstats):
 	yellow, maroon = '#FED330', '#A9180F'
 
 	base = {
-		'font_name': 'AppleGothic',
+		'font_name': 'Helvetica Neue',
 		'align': 'center',
 		'font_size': 10
 	}
@@ -258,51 +264,149 @@ def write_xlsx(df, dfstats):
 		'bottom_color': mid_blue,
 		'left_color': grey,
 		'right_color': grey,
-			}
+		}
 
 	date = {**base, 'italic': True, 'num_format': 'mm/dd/yy'}
 	game = {**base, 'align': 'right', 'num_format': '#,##0', 'font_size': 12}
 	side = {**base, 'italic': True}
-	stat = {**base, 'num_format': '0.000'}
+	stat = {**base, 'num_format': '0.000', 'font_size': 12}
+	f_ = {'right':6, 'right_color': maroon}
+
+	stat_int = {**stat, 'num_format': '#,##0'}
+	stat_f = {**stat, **f_}
+	stat_int_f = {**stat_int, **f_}
+	overall = {**stat,
+		'bg_color': yellow,
+		'top': 1,
+		'top_color': 'black',
+		'bottom': 13,
+		'bottom_color': grey
+		}
+
+
+	overall_wins = {**overall, 'num_format': '#,##0'}
+	overall_wins_f = {**overall_wins, **f_}
+	overall_stat = overall #for ppg & win_perc
+	overall_stat_f = {**overall, **f_}
 
 	odd_side = {**odd_base, **side}
 	odd_date = {**odd_base, **date}
 	odd_game = {**odd_base, **game}
 
 	head = {**base,
-		'font_size': 14,
+		'font_name': 'AppleGothic',
+		'font_size': 13,
 		'font_color': 'white',
 		'bg_color': dark_blue,
 		'bold': True,
 		'bottom': 1,
 		}
-	stat_head = {**head, 'valign': 'vcenter'}
+	stat_head = {**head, #F, K
+		'valign': 'vcenter',
+		'bottom':13,
+		'bottom_color': maroon
+		}
+	stat_head_streak = {**stat_head, #streak
+		'right': 1,
+		'border_color': grey
+		}
+	stat_head_index1 = {**stat_head_streak, 'bottom': 13} #wins, win%, ppg
+
+	#h, a, current, best
+	stat_head_index2 = {**stat_head,
+		'font_name': 'Calibri',
+		'align': 'center',
+		'bg_color': light_blue,
+		'border': 1,
+		'border_color': grey,
+		'font_color': 'black'
+		}
 
 	date_format = workbook.add_format(date)
-	odd_date_format = workbook.add_format(odd_date)
 	game_format = workbook.add_format(game)
-	stat_head_format = workbook.add_format(stat_head)
-	odd_game_format = workbook.add_format(odd_game)
 	head_format = workbook.add_format(head)
+	odd_date_format = workbook.add_format(odd_date)
+	odd_game_format = workbook.add_format(odd_game)
 	odd_side_format = workbook.add_format(odd_side)
-	stat_format = workbook.add_format(stat)
+	overall_stat_format = workbook.add_format(overall_stat)
+	overall_stat_f_format = workbook.add_format(overall_stat_f)
+	overall_wins_f_format = workbook.add_format(overall_wins_f)
+	overall_wins_format = workbook.add_format(overall_wins)
 	side_format = workbook.add_format(side)
+	stat_f_format = workbook.add_format(stat_f)
+	stat_head_format = workbook.add_format(stat_head)
+	stat_format = workbook.add_format(stat)
+	stat_int_format = workbook.add_format(stat_int)
+	stat_int_f_format = workbook.add_format(stat_int_f)
+	stat_head_index1_format = workbook.add_format(stat_head_index1)
+	stat_head_index2_format = workbook.add_format(stat_head_index2)
+	stat_head_streak_format = workbook.add_format(stat_head_streak)
 
 	win_format = workbook.add_format({'bold': True, 'italic': True})
-	totals_format = workbook.add_format({
-		'top': 1,
-		'font_size': 14,
-		'font_name': 'AppleGothic',
-		'bg_color': '#f2db87',
-		'num_format': '#,##0'
-		})
 
+	index_format_dict = {
+		'wins': stat_head_index1_format,
+		'win%': stat_head_index1_format,
+		'ppg': stat_head_index1_format,
+		'streak': stat_head_streak_format,
+		'H': stat_head_index2_format,
+		'A': stat_head_index2_format,
+		'overall': overall_stat_format,
+		'Current': stat_head_index2_format,
+		'Best': stat_head_index2_format
+	}
+
+	stat_format_dict = {
+		'wins': {
+			'H': {
+				'F': stat_int_f_format,
+				'K': stat_int_format,
+				},
+			'A': {
+				'F': stat_int_f_format,
+				'K': stat_int_format,
+			},
+			'overall': {
+				'F': overall_wins_f_format,
+				'K': overall_wins_format,
+			}
+		},
+		'win%': {
+			'H': {
+				'F': stat_f_format,
+				'K': stat_format,
+				},
+			'A': {
+				'F': stat_f_format,
+				'K': stat_format,
+			},
+			'overall': {
+				'F': overall_stat_f_format,
+				'K': overall_stat_format,
+			}
+		},
+		'streak': {
+			'Current':{
+				'F': stat_int_f_format,
+				'K': stat_int_format
+			},
+			'Best': {
+				'F': stat_int_f_format,
+				'K': stat_int_format
+			}
+		}
+	}
+
+	stat_format_dict['ppg'] = stat_format_dict['win%']
 
 	# format the head
 	for col_num, value in enumerate(df.columns.values):
 		# worksheet.write(row, col, value, format)
 		#print("col_num: ", col_num, " value: ", value)
 		worksheet.write(0, col_num + 1, value, head_format)
+
+	for i,x in enumerate(df.index.names):
+		worksheet.write(0, i, x, head_format)
 
 	for i in range(1, game_rows+1):
 
@@ -327,28 +431,31 @@ def write_xlsx(df, dfstats):
 		worksheet.write(i, 3, s, s_format)
 
 	# set the width of the index (date) column
-	worksheet.set_column(0, 0, 20)
+	worksheet.set_column(0, 0, 15)
 
-	# for i in range(1, len(df.columns)-1):
-	# 	x = i-1
-	# 	worksheet.write(tot_wins_row, i, df.iloc[-4, x], totals_format)
-
-
+	# emboldens/italicizes each win in the game rows using conditional formatting
 	for i in range(2, game_rows+2):
-
 		x = i-2
 		f = df.iloc[x, 0]
 		k = df.iloc[x, 1]
-
 		worksheet.conditional_format('B{}:B{}'.format(i,i), {'type':'cell','criteria':'>','value':k,'format': win_format})
 		worksheet.conditional_format('C{}:C{}'.format(i,i), {'type':'cell','criteria':'>','value':f,'format': win_format})
 
+	#formatting stats head
+	for i,v in enumerate(dfstats.columns.values):
+		x = i+2
+		worksheet.write(stats_head_row, x, v, stat_head_format)
 
-	#worksheet.set_column('A:A{}'.format(game_rows), None, None, {'hidden': True})
+	#formatting stats index and 'table''
+	for i, v in enumerate(dfstats.index):
+		x = win_index+i
+		ind1,ind2 = v
+		f, k = dfstats.iloc[i]
 
-
-	worksheet.write(win_index, 0, dfstats.index[0][0], stat_head_format)
-	#worksheet.merge_range('B4:D4', 'Merged Range', merge_format)
+		worksheet.write(x, 0, ind1, index_format_dict[ind1])
+		worksheet.write(x, 1, ind2, index_format_dict[ind2])
+		worksheet.write(x, 2, f, stat_format_dict[ind1][ind2]['F'])
+		worksheet.write(x, 3, k, stat_format_dict[ind1][ind2]['K'])
 
 	writer.save()
 
