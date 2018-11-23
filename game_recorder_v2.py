@@ -269,7 +269,7 @@ def write_xlsx(df, dfstats):
 	date = {**base, 'italic': True, 'num_format': 'mm/dd/yy'}
 	game = {**base, 'align': 'right', 'num_format': '#,##0', 'font_size': 12}
 	side = {**base, 'italic': True}
-	stat = {**base, 'num_format': '0.000', 'font_size': 12}
+	stat = {**base, 'num_format': '0.00', 'font_size': 12}
 	f_ = {'right':6, 'right_color': maroon}
 
 	stat_int = {**stat, 'num_format': '#,##0'}
