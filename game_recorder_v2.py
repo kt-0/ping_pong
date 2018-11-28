@@ -108,7 +108,7 @@ def main():
 
 	dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=now)
 	df1 = df1.append(dfnew, sort=False)
-	more = input('More scores to enter? (Y/N)').lower()
+	more = input('More scores to enter? (Y/N)').lower() or "y"
 
 	while more[:1] == 'y':
 		f_score = get_score('Fritz')
@@ -117,7 +117,7 @@ def main():
 		now = pd.DatetimeIndex([pd.datetime.today().date()], name='Date')
 		dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=now)
 		df1 = df1.append(dfnew, sort=False)
-		more = input('More scores to enter? (Y/N)').lower()
+		more = input('More scores to enter? (Y/N)').lower() or "y"
 
 	f_scores = df1['Fritz'].tolist()
 	k_scores = df1['Ken'].tolist()
@@ -202,7 +202,7 @@ def main():
 ############
 # modular functions
 ############
-## rounding function (nr = Normal Round)
+# rounding function (nr = Normal Round)
 def nr(n, decimals=2):
 	expoN = n * 10 ** decimals
 	if abs(expoN) - abs(math.floor(expoN)) < 0.5:
