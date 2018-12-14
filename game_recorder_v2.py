@@ -130,7 +130,6 @@ def main():
 			f = x[0]
 			k = x[1]
 			side = x[2]
-
 			if f>k:
 				ken.streak.current = 0
 				fritz.streak.current = fritz.streak.current+1
@@ -141,7 +140,6 @@ def main():
 					fritz.a.points = fritz.a.points+f
 					ken.h.losses = ken.h.losses+1
 					ken.h.points = ken.h.points+k
-
 				if side == 'H':
 					fritz.h.wins = fritz.h.wins+1
 					fritz.h.points = fritz.h.points+f
@@ -151,16 +149,13 @@ def main():
 			if k>f:
 				fritz.streak.current = 0
 				ken.streak.current = ken.streak.current+1
-
 				if (ken.streak.current > ken.streak.best):
 					ken.streak.best = ken.streak.current
-
 				if side == 'A':
 					ken.a.wins = ken.a.wins+1
 					ken.a.points = ken.a.points+k
 					fritz.h.losses = fritz.h.losses+1
 					fritz.h.points = fritz.h.points+f
-
 				if side == 'H':
 					ken.h.wins = ken.h.wins+1
 					ken.h.points = ken.h.points+k
