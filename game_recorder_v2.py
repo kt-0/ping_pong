@@ -91,11 +91,18 @@ class Streak:
 
 def main():
 
-	df1 = pd.read_excel('assets/excel/ping_pong_scoresheet_v2.xlsx', header=0, skipfooter=13).reset_index(drop=True)
+	timeparse = lambda x: datetime.time.strftime(x, "%I:%M %p")
+	df1 = pd.read_excel('assets/excel/ping_pong_scoresheet_v2.xlsx', parse_dates=['Time'], date_parser=timeparse, header=0, skipfooter=13).reset_index(drop=True)
+	df1.Time = pd.to_datetime(df1.Time, format="%I:%M %p")
+
 	dates = pd.DatetimeIndex(df1.Date.dt.date, name='Date')
 	start_games = df1.shape[0]
 	df1.index = dates
-	df1.drop(columns='Date',inplace=True)
+	df1.drop(columns='Date', inplace=True)
+
+	break_start_time = datetime.datetime.strptime(input('Enter break start time <mm:hh pm> '), '%I:%M %p').time()
+	tmp_dt = datetime.datetime.combine(datetime.datetime.today(), break_start_time)
+	break_length = datetime.datetime.now() - tmp_dt
 
 	f_score = get_score('Fritz')
 	k_score = get_score('Ken')
@@ -104,20 +111,34 @@ def main():
 	while ((side != 'A') and (side != 'H')):
 		side = input('Winner side? H/A').upper()
 
-	now = pd.DatetimeIndex([pd.datetime.today().date()], name='Date')
-
-	dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=now)
-	df1 = df1.append(dfnew, sort=False)
+	date_index = pd.DatetimeIndex([pd.datetime.today().date()], name='Date')
+	dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=date_index)
 	more = input('More scores to enter? (Y/N)').lower() or "y"
 
 	while more[:1] == 'y':
 		f_score = get_score('Fritz')
 		k_score = get_score('Ken')
 		side = input('Winner side? H/A').upper()
-		now = pd.DatetimeIndex([pd.datetime.today().date()], name='Date')
-		dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=now)
-		df1 = df1.append(dfnew, sort=False)
+
+		while ((side != 'A') and (side != 'H')):
+			side = input('Winner side? H/A').upper()
+
+		dfnew = dfnew.append(pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=date_index), sort=False)
 		more = input('More scores to enter? (Y/N)').lower() or "y"
+
+	warmup_time = datetime.timedelta(minutes=2.5)
+	total_points = sum(dfnew.sum(axis=1))
+	time_deltas = []
+
+	for _i, v in enumerate(dfnew.sum(axis=1)):
+		time = v/total_points*break_length
+		time_deltas.append(time)
+
+	time_list = [(tmp_dt + warmup_time + sum(time_deltas[:i], datetime.timedelta())).time().strftime("%I:%M %p") for i,v in enumerate(time_deltas)]
+
+
+	dfnew['Time'] = time_list
+	df1 = df1.append(dfnew, sort=False)
 
 	f_scores = df1['Fritz'].tolist()
 	k_scores = df1['Ken'].tolist()
@@ -225,7 +246,7 @@ def percentify(x):
 # Function for writing/saving the dataframes to excel
 ############
 def write_xlsx(df, dfstats):
-	writer = pd.ExcelWriter("assets/excel/ping_pong_scoresheet_v2.xlsx", engine="xlsxwriter", date_format='mm/dd/yy', datetime_format='mm/dd/yy')
+	writer = pd.ExcelWriter("assets/excel/ping_pong_scoresheet_v2.xlsx", engine="xlsxwriter")
 	df.to_excel(writer, sheet_name="Sheet1", startrow=0, startcol=0)
 	dfstats.to_excel(writer, sheet_name="Sheet1", startrow=(df.shape[0]+2), startcol=0)
 	workbook = writer.book
@@ -265,6 +286,7 @@ def write_xlsx(df, dfstats):
 	game = {**base, 'align': 'right', 'num_format': '#,##0', 'font_size': 12}
 	side = {**base, 'italic': True}
 	stat = {**base, 'num_format': '0.00', 'font_size': 12}
+	time = {**base, 'num_format': 'hh:mm AM/PM'}
 	f_ = {'right':6, 'right_color': maroon}
 
 	stat_int = {**stat, 'num_format': '#,##0'}
@@ -287,6 +309,8 @@ def write_xlsx(df, dfstats):
 	odd_side = {**odd_base, **side}
 	odd_date = {**odd_base, **date}
 	odd_game = {**odd_base, **game}
+	odd_date = {**odd_base, **date}
+	odd_time = {**odd_base, **time}
 
 	head = {**base,
 		'font_name': 'AppleGothic',
@@ -320,9 +344,11 @@ def write_xlsx(df, dfstats):
 	date_format = workbook.add_format(date)
 	game_format = workbook.add_format(game)
 	head_format = workbook.add_format(head)
+	time_format = workbook.add_format(time)
 	odd_date_format = workbook.add_format(odd_date)
 	odd_game_format = workbook.add_format(odd_game)
 	odd_side_format = workbook.add_format(odd_side)
+	odd_time_format = workbook.add_format(odd_time)
 	overall_stat_format = workbook.add_format(overall_stat)
 	overall_stat_f_format = workbook.add_format(overall_stat_f)
 	overall_wins_f_format = workbook.add_format(overall_wins_f)
@@ -407,23 +433,27 @@ def write_xlsx(df, dfstats):
 
 		x = i-1
 		d = df.index[x]
-		f, k, s = df.iloc[x]
+		f, k, s, t = df.iloc[x]
 
 		# light blue fill on every other row
 		if i%2 == 0:
 			g_format = odd_game_format
 			dt_format = odd_date_format
 			s_format = odd_side_format
+			t_format = odd_time_format
 
 		else:
 			g_format = game_format
 			dt_format = date_format
 			s_format = side_format
+			t_format = time_format
+
 
 		worksheet.write_datetime(i, 0, d, dt_format)
 		worksheet.write(i, 1, f, g_format)
 		worksheet.write(i, 2, k, g_format)
 		worksheet.write(i, 3, s, s_format)
+		worksheet.write_datetime(i, 4, t, t_format)
 
 	# set the width of the index (date) column
 	worksheet.set_column(0, 0, 15)
