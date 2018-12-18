@@ -91,10 +91,7 @@ class Streak:
 
 def main():
 
-	timeparse = lambda x: datetime.time.strftime(x, "%I:%M %p")
-	df1 = pd.read_excel('assets/excel/ping_pong_scoresheet_v2.xlsx', parse_dates=['Time'], date_parser=timeparse, header=0, skipfooter=13).reset_index(drop=True)
-	df1.Time = pd.to_datetime(df1.Time, format="%I:%M %p")
-
+	df1 = pd.read_excel('/Users/ktuten/Desktop/ping_pong/assets/excel/ping_pong_scoresheet_v2.xlsx', parse_dates=['Time'], header=0, skipfooter=13).reset_index(drop=True)
 	dates = pd.DatetimeIndex(df1.Date.dt.date, name='Date')
 	start_games = df1.shape[0]
 	df1.index = dates
@@ -103,6 +100,7 @@ def main():
 	break_start_time = datetime.datetime.strptime(input('Enter break start time <mm:hh pm> '), '%I:%M %p').time()
 	tmp_dt = datetime.datetime.combine(datetime.datetime.today(), break_start_time)
 	break_length = datetime.datetime.now() - tmp_dt
+	break_length = datetime.timedelta(seconds=round(break_length.total_seconds()))
 
 	f_score = get_score('Fritz')
 	k_score = get_score('Ken')
@@ -112,17 +110,15 @@ def main():
 		side = input('Winner side? H/A').upper()
 
 	date_index = pd.DatetimeIndex([pd.datetime.today().date()], name='Date')
-	dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=date_index)
+	dfnew = pd.DataFrame({'Fritz': [f_score], 'Ken': [k_score], 'Side': [side]}, index=date_index)
 	more = input('More scores to enter? (Y/N)').lower() or "y"
 
 	while more[:1] == 'y':
 		f_score = get_score('Fritz')
 		k_score = get_score('Ken')
 		side = input('Winner side? H/A').upper()
-
 		while ((side != 'A') and (side != 'H')):
 			side = input('Winner side? H/A').upper()
-
 		dfnew = dfnew.append(pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=date_index), sort=False)
 		more = input('More scores to enter? (Y/N)').lower() or "y"
 
@@ -130,12 +126,11 @@ def main():
 	total_points = sum(dfnew.sum(axis=1))
 	time_deltas = []
 
-	for _i, v in enumerate(dfnew.sum(axis=1)):
+	for _i,v in enumerate(dfnew.sum(axis=1)):
 		time = v/total_points*break_length
-		time_deltas.append(time)
+		time_deltas.append(datetime.timedelta(seconds=round(time.total_seconds())))
 
-	time_list = [(tmp_dt + warmup_time + sum(time_deltas[:i], datetime.timedelta())).time().strftime("%I:%M %p") for i,v in enumerate(time_deltas)]
-
+	time_list = [(tmp_dt + warmup_time + sum(time_deltas[:i], datetime.timedelta())) for i,v in enumerate(time_deltas)]
 
 	dfnew['Time'] = time_list
 	df1 = df1.append(dfnew, sort=False)
