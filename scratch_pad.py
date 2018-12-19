@@ -25,12 +25,17 @@ dfstats = pd.DataFrame(
 
 12/15/18	9	15	A	11:02 AM
 
+days_of_week = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+for row in dfnew.itertuples(index=False):
+	print(row)
+	biggest = max(row.Fritz, row.Ken)
+	row[row.index(biggest)]
+	row._fields[row.index(biggest)]
+	row.Side
+	days_of_week[row.Time.weekday()]
 # BEGIN DRAFT #
 
-timeparse = lambda x: datetime.time.strftime(x, "%I:%M %p")
-timeparse = lambda x: (datetime.datetime.strptime(str(x), "%I:%M %p")).time()
-df1 = pd.read_excel('/Users/ktuten/Desktop/ping_pong/assets/excel/ping_pong_scoresheet_v2.xlsx', parse_dates=['Time'], date_parser=timeparse, header=0, skipfooter=13).reset_index(drop=True)
-df1.Time = pd.to_datetime(df1.Time, format="%I:%M %p")
+df1 = pd.read_excel('/Users/ktuten/Desktop/ping_pong/assets/excel/ping_pong_scoresheet_v2.xlsx', parse_dates=['Time'], header=0, skipfooter=13).reset_index(drop=True)
 dates = pd.DatetimeIndex(df1.Date.dt.date, name='Date')
 start_games = df1.shape[0]
 df1.index = dates
@@ -39,6 +44,7 @@ df1.drop(columns='Date', inplace=True)
 break_start_time = datetime.datetime.strptime(input('Enter break start time <mm:hh pm> '), '%I:%M %p').time()
 tmp_dt = datetime.datetime.combine(datetime.datetime.today(), break_start_time)
 break_length = datetime.datetime.now() - tmp_dt
+break_length = datetime.timedelta(seconds=round(break_length.total_seconds()))
 
 f_score = get_score('Fritz')
 k_score = get_score('Ken')
@@ -48,7 +54,7 @@ while ((side != 'A') and (side != 'H')):
 	side = input('Winner side? H/A').upper()
 
 date_index = pd.DatetimeIndex([pd.datetime.today().date()], name='Date')
-dfnew = pd.DataFrame({'Fritz':[f_score], 'Ken': [k_score], 'Side': [side]}, index=date_index)
+dfnew = pd.DataFrame({'Fritz': [f_score], 'Ken': [k_score], 'Side': [side]}, index=date_index)
 more = input('More scores to enter? (Y/N)').lower() or "y"
 
 while more[:1] == 'y':
@@ -66,10 +72,9 @@ time_deltas = []
 
 for i,v in enumerate(dfnew.sum(axis=1)):
     time = v/total_points*break_length
-    time_deltas.append(time)
+    time_deltas.append(datetime.timedelta(seconds=round(time.total_seconds())))
 
-time_list = [(tmp_dt + warmup_time + sum(time_deltas[:i], datetime.timedelta())).time().strftime("%I:%M %p") for i,v in enumerate(time_deltas)]
-
+time_list = [(tmp_dt + warmup_time + sum(time_deltas[:i], datetime.timedelta())) for i,v in enumerate(time_deltas)]
 
 dfnew['Time'] = time_list
 df1 = df1.append(dfnew, sort=False)
@@ -86,8 +91,7 @@ fritz = Player()
 
 
 
-time_list = [(tmp_dt + warmup_time + sum(time_deltas[:i], datetime.timedelta())).time().strftime("%I:%M %p") for i,v in enumerate(time_deltas)]
-time_list = sum([])
+time_list = [(tmp_dt + warmup_time + sum(time_deltas[:i], datetime.timedelta())).time() for i,v in enumerate(time_deltas)]
 
     sum([(x/total_points)*break_length for x in dfnew.sum(axis=1)][:i], datetime.timedelta())
 
@@ -112,6 +116,8 @@ total_points = sum(dfnew.sum(axis=1))
 
 	ken = Player()
 	fritz = Player()
+
+df1 = pd.read_excel('/Users/ktuten/Desktop/ping_pong/assets/excel/ping_pong_scoresheet_v2.xlsx', parse_dates=['Time'], header=0, skipfooter=13).reset_index(drop=True)
 
 
 
@@ -473,3 +479,132 @@ def write_xlsx(df, dfstats):
 
 
 	writer.save()
+
+
+
+## NOTE: BEGIN MODELS ###
+
+
+    class Game(models.Model):
+        winner = models.ForeignKey(Player, on_delete=models.CASCADE)
+        date =
+
+
+    class Player(models.Model):
+
+     	NAME_CHOICES = (
+    		(FRITZ, 'Fritz'),
+    		(KEN, 'Ken'),
+    	)
+
+        name = models.CharField(max_length=100)
+
+
+    class Chart(models.Model):
+
+    	name = models.CharField(max_length=100)
+    	chart_type = models.CharField(max_length=25, default='bar')
+    	title = models.CharField(max_length=255, default='title')
+
+    	#need same number of Labels, Datas, and BackgroundColors to be created, in the event that they are not present
+    	# bord_color_set depends on bg_color_set to determine how many items to create if they dont already exist
+    	# labelset and dataset could do same, depending which is called first by the charts template
+    	def bg_colors(self):
+    		if self.backgroundcolor_set.exists():
+    			c = []
+    			for color in self.backgroundcolor_set.all():
+    				c.append(color.value)
+    			return c
+    		else:
+    			print("No background colors found")
+
+    	def bord_colors(self):
+    		# if self.chart_type == 'doughnut':
+    		# 	return None
+
+    		if self.bordercolor_set.exists():
+    			c = []
+    			for color in self.bordercolor_set.all():
+    				c.append(color.value)
+    			return c
+    		else:
+    			c = []
+    			p = re.compile('^rgba\(\s?(\d{1,3})\,\s?(\d{1,3})\,\s?(\d{1,3}).*\)?$')
+    			for color in self.backgroundcolor_set.all():
+    				m = p.match(color.value)
+    				c.append("rgb( {}, {}, {})".format(m.group(1),m.group(2),m.group(3)))
+    			return c
+    			#print("No border colors found")
+
+    	def labels(self):
+    		if self.label_set.exists():
+    			l = []
+    			for label in self.label_set.all():
+    				l.append(label.name)
+    			return l
+    		else:
+    			print("No labels found")
+
+
+    	def datas(self):
+    		if self.data_set.exists():
+    			d = []
+    			for data in self.data_set.all():
+    				d.append(data.value)
+    			return d
+    		else:
+    			print("No data found")
+
+    	def __str__(self):
+    		"""
+    		String for representing the Model object.
+    		"""
+    		return self.name
+
+
+    # These coincide with the 'labels' seen in a chart. The amount of these attached
+    # to a Chart (soon Dataset) should be equal to the amount of Datas (soon Datapoints)
+    # attached
+    class Label(models.Model):
+    	chart = models.ForeignKey(Chart, on_delete=models.CASCADE, default=None)
+    	name = models.CharField(max_length=255, default='')
+
+    	def __str__(self):
+    		return self.name
+
+    class BackgroundColor(models.Model):
+
+    	#NOTE: (1)
+    	#chart = models.ForeignKey(Dataset, on_delete=models.CASCADE, default=None)
+    	chart = models.ForeignKey(Chart, on_delete=models.CASCADE)
+    	value = models.CharField(max_length=50)
+    	def __str__(self):
+    		return self.value
+
+    class BorderColor(models.Model):
+
+    	#NOTE: (1)
+    	#chart = models.ForeignKey(Dataset, on_delete=models.CASCADE, default=None)
+    	chart = models.ForeignKey(Chart, on_delete=models.CASCADE)
+    	value = models.CharField(max_length=50)
+    	def __str__(self):
+    		return self.value
+
+    class Dataset(models.Model):
+
+    	#NOTE: (1)
+    	#chart = models.ForeignKey(Chart, on_delete=models.CASCADE)
+
+    	label = models.CharField(max_length=50)
+    	chart = models.OneToOneField(Chart, on_delete=models.CASCADE, default=None)
+    	def __str__(self):
+    		return self.label
+
+    class Data(models.Model):
+
+    	#chart = models.ForeignKey(Dataset, on_delete=models.CASCADE, default=None)
+    	chart = models.ForeignKey(Chart, on_delete=models.CASCADE, default=None)
+    	#value = models.IntegerField()
+    	value = models.FloatField()
+    	def __str__(self):
+    		return self.value
