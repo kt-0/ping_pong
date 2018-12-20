@@ -608,3 +608,68 @@ def write_xlsx(df, dfstats):
     	value = models.FloatField()
     	def __str__(self):
     		return self.value
+
+
+np.where(df.one > df.two, df.one)
+
+wins = np.where(df1.Fritz > df1.Ken, 'Fritz', 'Ken')
+fritz_wins = np.where(df1.Fritz > df1.Ken, 1, 0).sum()
+fritz_a_wins = np.where(((df1.Fritz > df1.Ken) & (df1.Side == 'A')), 1, 0).sum()
+fritz_h_wins = np.where(((df1.Fritz > df1.Ken) & (df1.Side == 'H')), 1, 0).sum()
+
+f = np.where((((df1.Fritz > df1.Ken) & (df1.Side == 'A')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'H'))), df1.Fritz, np.nan)
+f_a_ppg
+f = f[~np.isnan(np.where((((df1.Fritz > df1.Ken) & (df1.Side == 'A')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'H'))), df1.Fritz, np.nan))]
+
+f = [~np.isnan(np.where((((df1.Fritz > df1.Ken) & (df1.Side == 'A')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'H'))), df1.Fritz, np.nan))]
+f = f[~np.isnan(f)]
+f_a_ppg = f.mean()
+f.real.mean()
+
+ken_wins = np.where(df1.Ken > df1.Fritz, 1, 0).sum()
+
+np.where((df1.Fritz > df1.Ken and df1.Side == 'A') or (df1.Ken > df1.Fritz and df1.Side == df1.)), df1.Side, np.nan)
+fritz_wins = wins.tolist().count('Fritz')
+
+
+f_all = np.where(df1.Fritz > df1.Ken, [df1.Fritz, df1.Side], [df1.Fritz, df1.Side])
+
+df1.loc[(((df1.Fritz > df1.Ken) & (df1.Side == 'A')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'H'))), ['Fritz','Side']]
+
+df1.loc[(((df1.Fritz > df1.Ken) & (df1.Side == 'A')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'H'))), ['Fritz','Side']].agg({'Fritz':"mean"})
+
+
+### begin draft ####
+some_df1 = df1.loc[(((df1.Fritz > df1.Ken) & (df1.Side == 'A')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'H'))), ['Fritz','Ken','Side']]
+ppg1 = some_df1.agg({'Fritz':"mean", 'Ken':"mean", 'Side':"count"})
+some_df2 = df1.loc[(((df1.Fritz > df1.Ken) & (df1.Side == 'H')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'A'))), ['Ken','Fritz','Side']]
+ppg2 = some_df2.agg({'Fritz':"mean", 'Ken':"mean", 'Side':"count"})
+
+f.a.wins,f.a.losses = some_df1.groupby('Side')[['Fritz','Ken']].count().Fritz
+k.h.wins,k.h.losses = some_df1.groupby('Side')[['Fritz','Ken']].count().Fritz
+
+f.a.ppg, k.h.ppg, _ = ppg1
+k.a.ppg, f.h.ppg, _ = ppg2
+
+k.ppg = df1.Ken.mean()
+f.ppg = df1.Fritz.mean()
+
+### end draft ####
+
+
+some_df2 = df1.loc[(((df1.Fritz > df1.Ken) & (df1.Side == 'H')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'A'))), ['Ken','Fritz','Side']].agg({'Fritz':"mean", 'Ken':"mean", 'Side':"count"})
+ppg2 = some_df2.agg({'Fritz':"mean", 'Ken':"mean", 'Side':"count"})
+
+df1.loc[(df1.Fritz > df1.Ken)].max()
+
+
+df1.loc[(df1.Fritz < df1.Ken), ['Fritz','Ken']] = [0,1]
+df1.loc[(df1.Fritz > df1.Ken), ['Fritz','Ken']] = [1,0]
+
+df1.groupby('Side', 'Fritz').count()
+
+df1.Fritz.mean()
+
+df1.loc[(((df1.Fritz > df1.Ken) & (df1.Side == 'A')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'H'))), ['Fritz','Side']].groupby('Side')[['Fritz']]
+
+df1.loc[(((df1.Fritz > df1.Ken) & (df1.Side == 'A')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'H'))), ['Fritz','Side']].groupby('Side')
