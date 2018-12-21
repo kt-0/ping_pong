@@ -33,6 +33,8 @@ for row in dfnew.itertuples(index=False):
 	row._fields[row.index(biggest)]
 	row.Side
 	days_of_week[row.Time.weekday()]
+
+
 # BEGIN DRAFT #
 
 df1 = pd.read_excel('/Users/ktuten/Desktop/ping_pong/assets/excel/ping_pong_scoresheet_v2.xlsx', parse_dates=['Time'], header=0, skipfooter=13).reset_index(drop=True)
@@ -654,9 +656,77 @@ k.a.ppg, f.h.ppg, _ = ppg2
 k.ppg = df1.Ken.mean()
 f.ppg = df1.Fritz.mean()
 
+dftemp_k = df1.loc[(df1.Fritz < df1.Ken), ['Fritz', 'Ken', 'Side']]
+k.vic_marg = dftemp_k.diff(axis=1, periods=1).Ken.mean()
+k.a.vic_marg = dftemp_k.loc[(dftemp_k.Side == 'A'), ['Fritz', 'Ken']].diff(axis=1,periods=1).Ken.mean()
+k.h.vic_marg = dftemp_k.loc[(dftemp_k.Side == 'H'), ['Fritz', 'Ken']].diff(axis=1,periods=1).Ken.mean()
+
+
+dftemp_f = df1.loc[(df1.Fritz > df1.Ken), ['Fritz', 'Ken', 'Side']]
+f.vic_marg = dftemp_f.diff(axis=1, periods=-1).Fritz.mean()
+f.a.vic_marg = dftemp_f.loc[(dftemp_f.Side == 'A'), ['Fritz', 'Ken']].diff(axis=1,periods=-1).Fritz.mean()
+f.h.vic_marg = dftemp_f.loc[(dftemp_f.Side == 'H'), ['Fritz', 'Ken']].diff(axis=1,periods=-1).Fritz.mean()
+
 ### end draft ####
 
 
+
+days_of_week = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+for row in dfnew.itertuples(index=False):
+	print(row)
+	biggest = max(row.Fritz, row.Ken)
+	row[row.index(biggest)]
+	row._fields[row.index(biggest)]
+	row.Side
+	days_of_week[row.Time.weekday()]
+
+### DAY OF WEEK STATISTICS ###
+
+ken = {'Sunday': [],'Monday': [], 'Tuesday': [], 'Wednesday': [],'Thursday': [],'Friday': [],'Saturday':[]}
+days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+day_df = df1.loc[:, ['Fritz','Ken','Side']]
+
+day_df['day'] = [days_of_week[x] for x in day_df.index.dayofweek]
+day_df['winner'] = np.where(df1.Ken > df1.Fritz, 'Ken', 'Fritz')
+day_df.groupby('day')[['Fritz','Ken']].mean()
+
+for i,v in enumerate(ken.keys()):
+    ken[days_of_week[i]]
+    day_df = df1.loc[(df1.index.dayofweek == i), ['Fritz','Ken','Side']]
+    ken[days_of_week[i]]['wins'] = day_df.loc[(day_df.Ken > day_df.Fritz)].count()
+    ken[days_of_week[i]]['losses'] = len(day_df) - day_df.loc[(day_df.Ken > day_df.Fritz)].count()
+
+
+monday = df1.loc[(df1.index.dayofweek == i), ['Fritz','Ken','Side']]
+monday_wins = monday.loc[(monday.Ken > monday.Fritz)].count()
+
+ken[days_of_week[i]]['wins'] = monday.loc[(monday.Ken > monday.Fritz)].count()
+ken[days_of_week[i]]['losses'] = len(monday) - monday.loc[(monday.Ken > monday.Fritz)].count()
+
+
+k.vic_marg = df1.loc[(df1.Fritz < df1.Ken), ['Fritz', 'Ken']].diff(axis=1, periods=1).Ken.mean()
+f.vic_marg = df1.loc[(df1.Fritz > df1.Ken), ['Fritz', 'Ken']].diff(axis=1, periods=-1).Fritz.mean()
+
+
+
+
+margin_index = pd.MultiIndex.from_arrays([['Margin', 'Margin'], ['Fritz', 'Ken']])
+
+margin = df1.loc[(df1.Fritz > df1.Ken), ['Fritz', 'Ken']].diff(axis=1, periods=-1)
+
+margin = df1.loc[(df1.Fritz > df1.Ken), ['Fritz', 'Ken']].diff(axis=1, periods=-1).Fritz.mean()
+margin = df1.loc[(df1.Fritz < df1.Ken), ['Fritz', 'Ken']].diff(axis=1, periods=1).Ken.mean()
+
+f = df1.loc[(df1.Fritz > df1.Ken), ['Fritz', 'Ken']]
+
+k.vic_marg = df1.loc[(df1.Fritz < df1.Ken), ['Fritz', 'Ken']].diff(axis=1, periods=1).Ken.mean()
+k.a.vic_marg = dftemp_k.loc[(dftemp_k.Side == 'A'), ['Fritz', 'Ken']].diff(axis=1,periods=1).Ken.mean()
+k.h.vic_marg = dftemp_k.loc[(dftemp_k.Side == 'H'), ['Fritz', 'Ken']].diff(axis=1,periods=1).Ken.mean()
+
+k.loc[(dftemp_k.Side == 'H'), ['Fritz', 'Ken']].diff(axis=1,periods=1).Ken.mean()
+
+df1['margin']['Fritz'] = df1.loc[(df1.Fritz > df1.Ken), ['Fritz', 'Ken', 'Side']].groupby('Side')['Fritz','Ken'].diff(axis=1, periods=-1)
 some_df2 = df1.loc[(((df1.Fritz > df1.Ken) & (df1.Side == 'H')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'A'))), ['Ken','Fritz','Side']].agg({'Fritz':"mean", 'Ken':"mean", 'Side':"count"})
 ppg2 = some_df2.agg({'Fritz':"mean", 'Ken':"mean", 'Side':"count"})
 
