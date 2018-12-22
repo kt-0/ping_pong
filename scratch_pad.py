@@ -647,25 +647,25 @@ ppg1 = some_df1.agg({'Fritz':"mean", 'Ken':"mean", 'Side':"count"})
 some_df2 = df1.loc[(((df1.Fritz > df1.Ken) & (df1.Side == 'H')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'A'))), ['Ken','Fritz','Side']]
 ppg2 = some_df2.agg({'Fritz':"mean", 'Ken':"mean", 'Side':"count"})
 
-f.a.wins,f.a.losses = some_df1.groupby('Side')[['Fritz','Ken']].count().Fritz
-k.h.wins,k.h.losses = some_df1.groupby('Side')[['Fritz','Ken']].count().Fritz
+fritz.a.wins,fritz.a.losses = some_df1.groupby('Side')[['Fritz','Ken']].count().Fritz
+ken.h.wins,ken.h.losses = some_df1.groupby('Side')[['Fritz','Ken']].count().Fritz
 
-f.a.ppg, k.h.ppg, _ = ppg1
-k.a.ppg, f.h.ppg, _ = ppg2
+fritz.a.ppg, ken.h.ppg, _ = ppg1
+ken.a.ppg, fritz.h.ppg, _ = ppg2
 
-k.ppg = df1.Ken.mean()
-f.ppg = df1.Fritz.mean()
+ken.ppg = df1.Ken.mean()
+fritz.ppg = df1.Fritz.mean()
 
 dftemp_k = df1.loc[(df1.Fritz < df1.Ken), ['Fritz', 'Ken', 'Side']]
-k.vic_marg = dftemp_k.diff(axis=1, periods=1).Ken.mean()
-k.a.vic_marg = dftemp_k.loc[(dftemp_k.Side == 'A'), ['Fritz', 'Ken']].diff(axis=1,periods=1).Ken.mean()
-k.h.vic_marg = dftemp_k.loc[(dftemp_k.Side == 'H'), ['Fritz', 'Ken']].diff(axis=1,periods=1).Ken.mean()
+ken.vic_marg = dftemp_k.diff(axis=1, periods=1).Ken.mean()
+ken.a.vic_marg = dftemp_k.loc[(dftemp_k.Side == 'A'), ['Fritz', 'Ken']].diff(axis=1,periods=1).Ken.mean()
+ken.h.vic_marg = dftemp_k.loc[(dftemp_k.Side == 'H'), ['Fritz', 'Ken']].diff(axis=1,periods=1).Ken.mean()
 
 
 dftemp_f = df1.loc[(df1.Fritz > df1.Ken), ['Fritz', 'Ken', 'Side']]
-f.vic_marg = dftemp_f.diff(axis=1, periods=-1).Fritz.mean()
-f.a.vic_marg = dftemp_f.loc[(dftemp_f.Side == 'A'), ['Fritz', 'Ken']].diff(axis=1,periods=-1).Fritz.mean()
-f.h.vic_marg = dftemp_f.loc[(dftemp_f.Side == 'H'), ['Fritz', 'Ken']].diff(axis=1,periods=-1).Fritz.mean()
+fritz.vic_marg = dftemp_f.diff(axis=1, periods=-1).Fritz.mean()
+fritz.a.vic_marg = dftemp_f.loc[(dftemp_f.Side == 'A'), ['Fritz', 'Ken']].diff(axis=1,periods=-1).Fritz.mean()
+fritz.h.vic_marg = dftemp_f.loc[(dftemp_f.Side == 'H'), ['Fritz', 'Ken']].diff(axis=1,periods=-1).Fritz.mean()
 
 ### end draft ####
 
@@ -683,6 +683,8 @@ for row in dfnew.itertuples(index=False):
 ### DAY OF WEEK STATISTICS ###
 
 ken = {'Sunday': [],'Monday': [], 'Tuesday': [], 'Wednesday': [],'Thursday': [],'Friday': [],'Saturday':[]}
+fritz = {'Sunday': [],'Monday': [], 'Tuesday': [], 'Wednesday': [],'Thursday': [],'Friday': [],'Saturday':[]}
+
 days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 day_df = df1.loc[:, ['Fritz','Ken','Side']]
@@ -691,11 +693,63 @@ day_df['day'] = [days_of_week[x] for x in day_df.index.dayofweek]
 day_df['winner'] = np.where(df1.Ken > df1.Fritz, 'Ken', 'Fritz')
 day_df.groupby('day')[['Fritz','Ken']].mean()
 
+day_df.groupby(['day', 'Side', 'winner']).count()
+day_df.groupby(['day', 'Side', 'winner']).day.count()
+
+
+##
+days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+ken = {'name':'Ken', 'Sunday': {},'Monday': {}, 'Tuesday': {}, 'Wednesday': {},'Thursday': {},'Friday': {},'Saturday':{}}
+fritz = {'name':'Fritz', 'Sunday': {},'Monday': {}, 'Tuesday': {}, 'Wednesday': {},'Thursday': {},'Friday': {},'Saturday':{}}
+
+day_df = df1.loc[:, ['Fritz','Ken','Side']]
+
+day_df['day'] = [days_of_week[x] for x in day_df.index.dayofweek]
+day_df['winner'] = np.where(df1.Ken > df1.Fritz, 'Ken', 'Fritz')
+
+user_list = [fritz, ken]
+
+for user in user_list:
+    for day in days_of_week:
+        wins = day_df.loc[((day_df.winner == user['name']) & (day_df.day == day)),[user['name']]].count()[0]
+        user[day]['wins'] = wins
+        user[day]['losses'] = day_df.loc[(day_df.day == day), [user['name']]].count()[0] - wins
+        user[day]['win_perc'] = np.around([user[day]['wins']/(user[day]['wins']+user[day]['losses'])], decimals=3)[0]
+        user[day]['ppg'] = np.around([day_df.loc[(day_df.day == day), [user['name']]].mean()[0]], decimals=3)[0]
+
+
+
+###
+for i,day in enumerate(days_of_week):
+        fritz[day]['wins'] = day_df.loc[(day_df.Fritz > day_df.Ken | )]
+        fritz[day]['losses']
+        fritz[day]['ppg']
+
+        wins = df1.[]
+        fritz
+
+
 for i,v in enumerate(ken.keys()):
+    day = days_of_week[i]
+
+    fritz[day] = {"wins": ,"losses": , "ppg": }
+
+    ken[day] = {"wins": ,"losses": , "ppg": }
     ken[days_of_week[i]]
     day_df = df1.loc[(df1.index.dayofweek == i), ['Fritz','Ken','Side']]
     ken[days_of_week[i]]['wins'] = day_df.loc[(day_df.Ken > day_df.Fritz)].count()
     ken[days_of_week[i]]['losses'] = len(day_df) - day_df.loc[(day_df.Ken > day_df.Fritz)].count()
+
+    for user in user_list:
+        wins =
+        losses =
+        ppg =
+
+        user[day]
+        x = user_list.copy()
+        y = x.pop(user)
+        user.day.wins = df1.loc[((df1[user.name] > df1[y.name]) & ]
 
 
 monday = df1.loc[(df1.index.dayofweek == i), ['Fritz','Ken','Side']]

@@ -50,21 +50,44 @@ class Stats:
 
 	@property
 	def ppg(self):
-		self._ppg = self.points/self.games
 		return(self._ppg)
+
+	@ppg.setter
+	def ppg(self, value):
+		self._ppg = value
+		return(self._ppg)
+
+	# @property
+	# def ppg(self):
+	# 	self._ppg = self.points/self.games
+	# 	return(self._ppg)
 
 	@property
 	def win_perc(self):
 		self._win_perc = (self._wins/self.games)*100
 		return(self._win_perc)
 
+	@property
+	def vic_marg(self):
+		return(self._vic_margin)
+
+	@vic_marg.setter
+	def vic_marg(self, value):
+		self._vic_marg = value
+		return(self._vic_marg)
+
+
 
 class Player(Stats):
-	def __init__(self):
+	def __init__(self, name):
 		Stats.__init__(self)
 		self.h = Stats()
 		self.a = Stats()
 		self.streak = Streak()
+		self.name = name
+
+	def __str__(self):
+		return(self.name)
 
 	@property
 	def games(self):
@@ -75,13 +98,37 @@ class Player(Stats):
 		return(self.a.wins+self.h.wins)
 
 	@property
+	def losses(self):
+		return(self.a.losses+self.h.losses)
+	# @property
+	# def ppg(self):
+	# 	return((self.a.points+self.h.points)/(self.a.games+self.h.games))
+
+	@property
 	def ppg(self):
-		return((self.a.points+self.h.points)/(self.a.games+self.h.games))
+		return(self._ppg)
+
+	@ppg.setter
+	def ppg(self, value):
+		self._ppg = value
+		return(self._ppg)
 
 	@property
 	def win_perc(self):
 		return(((self.a.wins+self.h.wins)/(self.a.games+self.h.games))*100)
 
+	@property
+	def vic_marg(self):
+		return(self._vic_marg)
+
+	@vic_marg.setter
+	def vic_marg(self, value):
+		self._vic_marg = value
+		return(self._vic_marg)
+
+	# @property
+	# def vic_marg(self):
+	# 	return((self.a.wins/(self.wins*self.a.vic_marg)) + (self.h.wins/(self.wins*self.h.vic_marg)))
 
 class Streak:
 	def __init__(self, curr=0, b=0):
@@ -139,8 +186,36 @@ def main():
 	k_scores = df1['Ken'].tolist()
 	sides = df1['Side'].tolist()
 
-	ken = Player()
-	fritz = Player()
+	ken = Player('Ken')
+	fritz = Player('Fritz')
+
+	some_df1 = df1.loc[(((df1.Fritz > df1.Ken) & (df1.Side == 'A')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'H'))), ['Fritz','Ken','Side']]
+	ppg1 = some_df1.agg({'Fritz':"mean", 'Ken':"mean", 'Side':"count"})
+	some_df2 = df1.loc[(((df1.Fritz > df1.Ken) & (df1.Side == 'H')) | ((df1.Ken > df1.Fritz) & (df1.Side == 'A'))), ['Fritz','Ken','Side']]
+	ppg2 = some_df2.agg({'Fritz':"mean", 'Ken':"mean", 'Side':"count"})
+
+	fritz.a.wins,fritz.a.losses = some_df1.groupby('Side')[['Fritz','Ken']].count().Fritz
+	ken.h.losses,ken.h.wins = some_df1.groupby('Side')[['Fritz','Ken']].count().Ken
+
+	fritz.h.losses,fritz.h.wins = some_df2.groupby('Side')[['Fritz','Ken']].count().Fritz
+	ken.a.wins, ken.a.losses = some_df2.groupby('Side')[['Fritz','Ken']].count().Ken
+
+	fritz.a.ppg, ken.h.ppg, _ = ppg1
+	fritz.h.ppg, ken.a.ppg, _ = ppg2
+
+	ken.ppg = df1.Ken.mean()
+	fritz.ppg = df1.Fritz.mean()
+
+	dftemp_k = df1.loc[(df1.Fritz < df1.Ken), ['Fritz', 'Ken', 'Side']]
+	ken.vic_marg = dftemp_k.diff(axis=1, periods=1).Ken.mean()
+	ken.a.vic_marg = dftemp_k.loc[(dftemp_k.Side == 'A'), ['Fritz', 'Ken']].diff(axis=1,periods=1).Ken.mean()
+	ken.h.vic_marg = dftemp_k.loc[(dftemp_k.Side == 'H'), ['Fritz', 'Ken']].diff(axis=1,periods=1).Ken.mean()
+
+
+	dftemp_f = df1.loc[(df1.Fritz > df1.Ken), ['Fritz', 'Ken', 'Side']]
+	fritz.vic_marg = dftemp_f.diff(axis=1, periods=-1).Fritz.mean()
+	fritz.a.vic_marg = dftemp_f.loc[(dftemp_f.Side == 'A'), ['Fritz', 'Ken']].diff(axis=1,periods=-1).Fritz.mean()
+	fritz.h.vic_marg = dftemp_f.loc[(dftemp_f.Side == 'H'), ['Fritz', 'Ken']].diff(axis=1,periods=-1).Fritz.mean()
 
 	for _,x in enumerate(zip(f_scores, k_scores, sides)):
 			f = x[0]
@@ -151,32 +226,32 @@ def main():
 				fritz.streak.current = fritz.streak.current+1
 				if (fritz.streak.current > fritz.streak.best):
 					fritz.streak.best = fritz.streak.current
-				if side == 'A':
-					fritz.a.wins = fritz.a.wins+1
-					fritz.a.points = fritz.a.points+f
-					ken.h.losses = ken.h.losses+1
-					ken.h.points = ken.h.points+k
-				if side == 'H':
-					fritz.h.wins = fritz.h.wins+1
-					fritz.h.points = fritz.h.points+f
-					ken.a.losses = ken.a.losses+1
-					ken.a.points = ken.a.points+k
+				# if side == 'A':
+				# 	fritz.a.wins = fritz.a.wins+1
+				# 	fritz.a.points = fritz.a.points+f
+				# 	ken.h.losses = ken.h.losses+1
+				# 	ken.h.points = ken.h.points+k
+				# if side == 'H':
+				# 	fritz.h.wins = fritz.h.wins+1
+				# 	fritz.h.points = fritz.h.points+f
+				# 	ken.a.losses = ken.a.losses+1
+				# 	ken.a.points = ken.a.points+k
 
 			if k>f:
 				fritz.streak.current = 0
 				ken.streak.current = ken.streak.current+1
 				if (ken.streak.current > ken.streak.best):
 					ken.streak.best = ken.streak.current
-				if side == 'A':
-					ken.a.wins = ken.a.wins+1
-					ken.a.points = ken.a.points+k
-					fritz.h.losses = fritz.h.losses+1
-					fritz.h.points = fritz.h.points+f
-				if side == 'H':
-					ken.h.wins = ken.h.wins+1
-					ken.h.points = ken.h.points+k
-					fritz.a.losses = fritz.a.losses+1
-					fritz.a.points = fritz.a.points+f
+				# if side == 'A':
+				# 	ken.a.wins = ken.a.wins+1
+				# 	ken.a.points = ken.a.points+k
+				# 	fritz.h.losses = fritz.h.losses+1
+				# 	fritz.h.points = fritz.h.points+f
+				# if side == 'H':
+				# 	ken.h.wins = ken.h.wins+1
+				# 	ken.h.points = ken.h.points+k
+				# 	fritz.a.losses = fritz.a.losses+1
+				# 	fritz.a.points = fritz.a.points+f
 
 
 	multi_ind = [
